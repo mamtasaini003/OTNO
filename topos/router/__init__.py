@@ -1,0 +1,1 @@
+from .topology_check import compute_euler_characteristic, compute_genus, TopologicalRouter

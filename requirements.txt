@@ -8,9 +8,10 @@ pyvista
 pandas==2.1.4
 pykeops # require a newer version of the GNU Standard C++ Library (libstdc++.so.6), if met compiling problem, try "module load gcc/newer_version_number" # e.g., gcc/11.3.0 or gcc/12.2.0
 geomloss
+trimesh
 
 pot==0.9.5
-neuraloperato==1.0.2
+neuraloperator==1.0.2
 
 tensorboard 
 h5py
