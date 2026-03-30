@@ -1,0 +1,42 @@
+# TOPOS Configuration - Main Topological Router & Latent FNO
+# Focus on structural reference from neuraloperator but optimized for irregular meshes via OT.
+
+model:
+  type: "topos"
+  spherical_config:
+    n_modes: [16, 16]         # Number of Fourier modes on genus-0 branch
+    hidden_channels: 32       # Layer width
+    in_channels: 9            # Dynamic features (coords 3 + normals 3 + pressure 1 + extra)
+    out_channels: 1          # Predicted physical field
+    n_layers: 4               # FNO stack depth
+  
+  volumetric_config:          # Branch for genus != 0,1 or 3D Cartesian domains
+    n_modes: [16, 16, 16]
+    hidden_channels: 32
+    in_channels: 4
+    out_channels: 1
+    n_layers: 4
+  
+  toroidal_config: null       # Shares spherical weights if null, use dict() to separate genus-1 weights
+
+training:
+  n_epochs: 150               # Number of training iterations
+  batch_size: 1               # Batch size (currently 1 for diverse irregular meshes)
+  learning_rate: 0.001        # Initial LR for Adam optimizer
+  weight_decay: 0.0001
+  scheduler: "StepLR"
+  step_size: 50
+  gamma: 0.5                  # Decay factor
+  
+dataset:
+  name: "car-cfd"             # Dataset selector (car-cfd, flowbench, shapenet)
+  path: "/media/HDD/mamta_backup/datasets/otno/"
+  resolution: 512             # Nominal resolution for OT mapping scaling
+  train_samples: 800
+  test_samples: 200
+
+# Optimal Transport Parameters (Stage 1)
+ot_map:
+  expand_factor: 2.0          # Scaling factor for the latent 2D domain [0, 1]
+  blur: 0.01                  # Sinkhorn blur parameter for entropic regularization
+  latent_topology: "auto"     # Use router for automatic topological selection

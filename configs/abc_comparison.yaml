@@ -1,0 +1,34 @@
+# ABC Dataset Comparison Configuration
+# Standard hyperparameters for both OTNO and TOPOS on the ABC Dataset.
+
+model:
+  n_modes: [16, 16]
+  hidden_channels: 120
+  in_channels: 9          # coords 3 + normals 3 + cross-features 3
+  out_channels: 1
+  n_layers: 4
+  norm: "group_norm"
+  use_mlp: True
+  mlp:
+    expansion: 1.0
+    dropout: 0.0
+  factorization: "tucker"
+  rank: 0.4
+  domain_padding: 0.125   # Crucial for FNO Fourier artifacts
+
+training:
+  n_epochs: 151
+  batch_size: 1
+  learning_rate: 0.001
+  weight_decay: 0.0001
+  scheduler: "StepLR"
+  step_size: 50
+  gamma: 0.5
+
+dataset:
+  name: "abc"
+  path: "/media/HDD/mamta_backup/datasets/otno/car-pressure-data/data"
+  train_samples: 500
+  test_samples: 111
+  resolution: 64         # Latent grid (32x32 or 64x64)
+  expand_factor: 2.0

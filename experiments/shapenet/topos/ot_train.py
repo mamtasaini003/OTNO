@@ -3,9 +3,9 @@ import torch
 from torch.utils.data import DataLoader, Dataset
 import sys
 import os
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../')))
-from topos.utils import LpLoss, count_model_params, UnitGaussianNormalizer
-from shapenet.topos.TransportFNO import TransportFNO
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../')))
+from topos.utils.utils import LpLoss, count_model_params, UnitGaussianNormalizer
+from TransportFNO import TransportFNO
 from timeit import default_timer
 
 class DictDataset(Dataset):
@@ -88,7 +88,7 @@ n_test = 111
 epochs = 151
 
 """Load data"""
-data_path = '/media/HDD/mamta_backup/datasets/topos/shapenet/torus_OTmean_geomloss_expand'+str(expand_factor)+'.pt'
+data_path = '/media/HDD/mamta_backup/datasets/otno/shapenet/torus_OTmean_geomloss_expand'+str(expand_factor)+'.pt'
 data = torch.load(data_path)
 print(data_path)
 device = torch.device('cuda')

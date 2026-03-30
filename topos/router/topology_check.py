@@ -8,6 +8,7 @@ Euler Characteristic: χ = V − E + F = 2 − 2g
   - g = 0  (χ = 2)  →  Spherical workbench (2D Latitude/Longitude or HEALPix)
   - g = 1  (χ = 0)  →  Toroidal workbench  (2D Periodic)
   - open   (χ = 1)  →  Volumetric / Padded (3D Cartesian or 2D Padded)
+  - graph  (χ fails)→  Graph Neural Operator Fallback (Non-manifold / Intersecting grids)
   - else            →  Volumetric workbench (3D Cartesian)
 """
 
@@ -83,7 +84,8 @@ class TopologicalRouter:
       - genus 0  (χ ≈ 2)  → "spherical"  (Lat/Lon or HEALPix 2D)
       - genus 1  (χ ≈ 0)  → "toroidal"   (2D Periodic)
       - open     (χ ≈ 1)  → "volumetric" (Route to Volumetric or padded Toroidal)
-      - otherwise          → "volumetric" (3D Cartesian)
+      - non-manifold      → "graph"      (Fallback to GNO message-passing)
+      - otherwise         → "volumetric" (3D Cartesian)
 
     Parameters
     ----------
@@ -95,9 +97,11 @@ class TopologicalRouter:
     SPHERICAL = "spherical"
     TOROIDAL = "toroidal"
     VOLUMETRIC = "volumetric"
+    GRAPH = "graph"
 
-    def __init__(self, chi_tol=0.5):
+    def __init__(self, chi_tol=0.5, require_watertight=False):
         self.chi_tol = chi_tol
+        self.require_watertight = require_watertight
 
     def route(self, mesh=None, chi=None, V=None, E=None, F=None):
         """Determine the appropriate workbench for the given geometry.
@@ -116,9 +120,24 @@ class TopologicalRouter:
         str
             One of "spherical", "toroidal", or "volumetric".
         """
+        if mesh is not None:
+            if not getattr(mesh, 'is_watertight', True) and self.require_watertight:
+                # Disconnected patches, infinite Betti numbers, or tearing
+                return self.GRAPH
+                
+            if chi is None:
+                try:
+                    chi = compute_euler_characteristic(mesh=mesh)
+                except Exception:
+                    # Mathematical topological algorithms crashed (often caused by extreme non-manifold edges)
+                    return self.GRAPH
+        elif chi is None:
+            chi = compute_euler_characteristic(V=V, E=E, F=F)
+            
         if chi is None:
-            chi = compute_euler_characteristic(mesh=mesh, V=V, E=E, F=F)
-
+            # Absolute fallback
+            return self.GRAPH
+            
         genus = compute_genus(chi)
 
         if abs(chi - 2) <= self.chi_tol:

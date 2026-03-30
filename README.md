@@ -62,4 +62,22 @@ python experiments/fno_benchmarks/train_navier_stokes.py
 python experiments/fno_benchmarks/train_burgers.py
 # Darcy Flow
 python experiments/fno_benchmarks/train_darcy.py
+
+## Verification Tiers
+A systematic testing suite for the TOPOS framework:
+
+### Tier 1: Topological Generalization (The Router Test)
+Validates the **Topological Router**. Tests if the model correctly identifies and directs different genus types (sphere vs torus) to the appropriate branch.
+```bash
+python experiments/tier1_router_test/train_poisson_mixed_genus.py
+```
+
+### Tier 2: Geometric Invariance (The OT Encoder Test)
+Validates the **OT Encoder**. Tests resolution invariance by training on coarse meshes (1K points) and testing zero-shot on fine meshes (16K points) on an L-shaped domain.
+```bash
+# 1. Generate multi-resolution data
+python scripts/generate_heat_multiresolution.py
+
+# 2. Run invariance test
+python experiments/tier2_geometric_invariance/train_heat_resolution_invariant.py
 ```

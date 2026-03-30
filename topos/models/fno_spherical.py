@@ -50,13 +50,18 @@ class SphericalTransportFNO(SFNO):
             fft_norm="forward",
             **kwargs
     ):
-        super().__init__(
+        nn.Module.__init__(self)
+        lifting_ratio = max(lifting_channels / hidden_channels, 1.0)
+        projection_ratio = max(projection_channels / hidden_channels, 1.0)
+
+        SFNO.__init__(
+            self,
             n_modes=n_modes,
             hidden_channels=hidden_channels,
             in_channels=in_channels,
             out_channels=out_channels,
-            lifting_channels=lifting_channels,
-            projection_channels=projection_channels,
+            lifting_channel_ratio=lifting_ratio,
+            projection_channel_ratio=projection_ratio,
             n_layers=n_layers,
             positional_embedding=positional_embedding,
             use_channel_mlp=use_mlp,
@@ -66,17 +71,14 @@ class SphericalTransportFNO(SFNO):
             norm=norm,
             preactivation=preactivation,
             fno_skip=fno_skip,
-            mlp_skip=mlp_skip,
+            channel_mlp_skip=mlp_skip,
             separable=separable,
             factorization=factorization,
             rank=rank,
-            joint_factorization=joint_factorization,
             fixed_rank_modes=fixed_rank_modes,
             implementation=implementation,
             decomposition_kwargs=decomposition_kwargs,
             domain_padding=domain_padding,
-            domain_padding_mode=domain_padding_mode,
-            fft_norm=fft_norm,
             **kwargs
         )
 
@@ -111,15 +113,16 @@ class SphericalTransportFNO(SFNO):
         if self.domain_padding is not None:
             transports = self.domain_padding.unpad(transports)
 
-        # Reshape from 2D grid to point cloud: (hidden_channels, N) → (N, hidden_channels)
-        transports = transports.reshape(self.hidden_channels, -1).permute(1, 0)
+        # Reshape from 2D grid to point cloud: (B, hidden_channels, H, W) -> (B, hidden_channels, N)
+        B = transports.shape[0]
+        transports = transports.reshape(B, self.hidden_channels, -1)
 
         # OT Decoder: select points corresponding to original mesh vertices
-        out = transports[idx_decoder].permute(1, 0)  # (hidden_channels, n_target)
+        out = transports[:, :, idx_decoder]  # (B, hidden_channels, n_target)
 
         # Project to output channels
-        out = out.unsqueeze(0)
-        out = self.projection(out).squeeze(1)  # (out_channels, n_target) or (n_target, out_channels)
+        # NeuralopMLP(n_dim=1) expects (B, Ch, N)
+        out = self.projection(out)
         return out
 
 
@@ -160,13 +163,18 @@ class ToroidalTransportFNO(FNO):
             SpectralConvLayer=SpectralConv,
             **kwargs
     ):
-        super().__init__(
+        nn.Module.__init__(self)
+        lifting_ratio = max(lifting_channels / hidden_channels, 1.0)
+        projection_ratio = max(projection_channels / hidden_channels, 1.0)
+
+        FNO.__init__(
+            self,
             n_modes=n_modes,
             hidden_channels=hidden_channels,
             in_channels=in_channels,
             out_channels=out_channels,
-            lifting_channels=lifting_channels,
-            projection_channels=projection_channels,
+            lifting_channel_ratio=lifting_ratio,
+            projection_channel_ratio=projection_ratio,
             n_layers=n_layers,
             positional_embedding=positional_embedding,
             use_channel_mlp=use_mlp,
@@ -176,18 +184,15 @@ class ToroidalTransportFNO(FNO):
             norm=norm,
             preactivation=preactivation,
             fno_skip=fno_skip,
-            mlp_skip=mlp_skip,
+            channel_mlp_skip=mlp_skip,
             separable=separable,
             factorization=factorization,
             rank=rank,
-            joint_factorization=joint_factorization,
             fixed_rank_modes=fixed_rank_modes,
             implementation=implementation,
             decomposition_kwargs=decomposition_kwargs,
             domain_padding=domain_padding,
-            domain_padding_mode=domain_padding_mode,
-            fft_norm=fft_norm,
-            SpectralConv=SpectralConvLayer,
+            conv_module=SpectralConvLayer,
             **kwargs
         )
 
@@ -222,13 +227,14 @@ class ToroidalTransportFNO(FNO):
         if self.domain_padding is not None:
             transports = self.domain_padding.unpad(transports)
 
-        # Reshape from 2D grid to point cloud: (hidden_channels, N) → (N, hidden_channels)
-        transports = transports.reshape(self.hidden_channels, -1).permute(1, 0)
+        # Reshape from 2D grid to point cloud: (B, hidden_channels, H, W) -> (B, hidden_channels, N)
+        B = transports.shape[0]
+        transports = transports.reshape(B, self.hidden_channels, -1)
 
         # OT Decoder: select points corresponding to original mesh vertices
-        out = transports[idx_decoder].permute(1, 0)  # (hidden_channels, n_target)
+        out = transports[:, :, idx_decoder]  # (B, hidden_channels, n_target)
 
         # Project to output channels
-        out = out.unsqueeze(0)
-        out = self.projection(out).squeeze(1)  # (out_channels, n_target) or (n_target, out_channels)
+        # NeuralopMLP(n_dim=1) expects (B, Ch, N)
+        out = self.projection(out)
         return out

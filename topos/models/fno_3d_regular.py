@@ -6,6 +6,9 @@ in a regular Cartesian grid [0,1]³ — e.g., bounding-box regions, higher-genus
 surfaces that don't map cleanly to sphere or torus.
 
 Uses 3D spectral convolutions via neuralop's FNO with n_modes=(M1, M2, M3).
+To compete with transformer-based local attention mechanisms (e.g., GAOT), 
+ensure high enough mode-cut is used to capture high-frequency details 
+in the [0,1]³ latent space.
 """
 
 import torch
@@ -169,13 +172,16 @@ class VolumetricFNO(FNO):
             transports = self.domain_padding.unpad(transports)
 
         # Reshape from 3D grid to point cloud:
-        # (1, hidden_channels, Nx, Ny, Nz) → (hidden_channels, N) → (N, hidden_channels)
-        transports = transports.reshape(self.hidden_channels, -1).permute(1, 0)
+        # (B, hidden_channels, Nx, Ny, Nz) → (B, hidden_channels, N)
+        B = transports.shape[0]
+        transports = transports.reshape(B, self.hidden_channels, -1)
 
         # OT Decoder: select points corresponding to original mesh vertices
-        out = transports[idx_decoder].permute(1, 0)  # (hidden_channels, n_target)
+        # transports: (B, hidden_channels, N_latent)
+        # idx_decoder: (n_target,)
+        out = transports[:, :, idx_decoder]  # (B, hidden_channels, n_target)
 
         # Project to output channels
-        out = out.unsqueeze(0)
-        out = self.projection(out).squeeze(1)
+        # NeuralopMLP(n_dim=1) expects (B, Ch, N)
+        out = self.projection(out)
         return out

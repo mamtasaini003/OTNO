@@ -34,38 +34,37 @@ class TransportFNO(FNO):
             domain_padding=None,
             domain_padding_mode="one-sided",
             fft_norm="forward",
-            SpectralConv=SpectralConv,
             **kwargs
-    ):        
+    ):
+        # Compute ratios from explicit channel counts
+        lifting_ratio = max(lifting_channels / hidden_channels, 1.0)
+        projection_ratio = max(projection_channels / hidden_channels, 1.0)
+
         super().__init__(
-            n_modes = n_modes,
-            hidden_channels = hidden_channels,
-            in_channels = in_channels,
-            out_channels = out_channels,
-            lifting_channels = lifting_channels,
-            projection_channels = projection_channels,
-            n_layers = n_layers,
+            n_modes=n_modes,
+            hidden_channels=hidden_channels,
+            in_channels=in_channels,
+            out_channels=out_channels,
+            lifting_channel_ratio=lifting_ratio,
+            projection_channel_ratio=projection_ratio,
+            n_layers=n_layers,
             positional_embedding=positional_embedding,
-            use_channel_mlp = use_mlp,
-            channel_mlp_dropout= mlp['dropout'],
-            channel_mlp_expansion= mlp['expansion'],
-            non_linearity = non_linearity,
-            norm = norm,
-            preactivation = preactivation,
-            fno_skip = fno_skip,
-            mlp_skip = mlp_skip,
-            separable = separable,
-            factorization = factorization,
-            rank = rank,
-            joint_factorization = joint_factorization,
-            fixed_rank_modes = fixed_rank_modes,
-            implementation = implementation,
-            decomposition_kwargs = decomposition_kwargs,
-            domain_padding = domain_padding,
-            domain_padding_mode = domain_padding_mode,
-            fft_norm = fft_norm,
-            SpectralConv = SpectralConv,
-            **kwargs
+            use_channel_mlp=use_mlp,
+            channel_mlp_dropout=mlp['dropout'] if mlp else 0,
+            channel_mlp_expansion=mlp['expansion'] if mlp else 0.5,
+            non_linearity=non_linearity,
+            norm=norm,
+            preactivation=preactivation,
+            fno_skip=fno_skip,
+            channel_mlp_skip=mlp_skip,
+            separable=separable,
+            factorization=factorization,
+            rank=rank,
+            fixed_rank_modes=fixed_rank_modes,
+            implementation=implementation,
+            decomposition_kwargs=decomposition_kwargs if decomposition_kwargs else {},
+            domain_padding=domain_padding,
+            conv_module=SpectralConv,
         )
 
         self.projection = NeuralopMLP(

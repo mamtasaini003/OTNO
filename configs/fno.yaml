@@ -1,0 +1,26 @@
+# FNO Baseline Configuration - Standard Fourier Neural Operator
+# Reference from neuraloperator (Li et al., 2020)
+
+model:
+  type: "fno"
+  n_modes: [16, 16]         # modes along x and y dimensions
+  hidden_channels: 32       # width of the spectral representation
+  in_channels: 3            # Input channels (e.g., initial cond + coords)
+  out_channels: 1          # Predicted solution channels
+  n_layers: 4               # Standard FNO stack depth
+  use_channel_mlp: True     # Use post-conv MLP as in newer FNO versions
+
+training:
+  n_epochs: 100
+  batch_size: 10
+  learning_rate: 0.001
+  weight_decay: 0.0001
+  scheduler: "StepLR"
+  step_size: 40
+  gamma: 0.5
+
+dataset:
+  name: "flowbench"
+  path: "/media/HDD/mamta_backup/datasets/otno/flowbench"
+  resolution: 512
+  predict_field: "pressure"

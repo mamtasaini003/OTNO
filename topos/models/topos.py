@@ -18,6 +18,7 @@ import torch.nn as nn
 
 from topos.models.fno_spherical import SphericalTransportFNO, ToroidalTransportFNO
 from topos.models.fno_3d_regular import VolumetricFNO
+from topos.models.gno_fallback import GraphFallbackSolver
 from topos.router.topology_check import TopologicalRouter
 
 
@@ -46,6 +47,7 @@ class TOPOS(nn.Module):
         spherical_config,
         volumetric_config=None,
         toroidal_config=None,
+        graph_config=None,
         chi_tol=0.5,
         default_topology="spherical",
     ):
@@ -70,6 +72,12 @@ class TOPOS(nn.Module):
             self.volumetric_solver = VolumetricFNO(**volumetric_config)
         else:
             self.volumetric_solver = None
+            
+        # Graph Fallback branch (Non-manifold / Extreme Euler structures)
+        if graph_config is not None:
+            self.graph_solver = GraphFallbackSolver(**graph_config)
+        else:
+            self.graph_solver = None
 
     def _get_solver(self, topology):
         """Return the appropriate solver for the given topology.
@@ -104,6 +112,13 @@ class TOPOS(nn.Module):
                     "Provide volumetric_config in TOPOS constructor."
                 )
             return self.volumetric_solver
+        elif topology == "graph":
+            if self.graph_solver is None:
+                raise ValueError(
+                    "Graph fallback topological routing requested but graph branch not configured. "
+                    "Provide graph_config in TOPOS constructor."
+                )
+            return self.graph_solver
         else:
             raise ValueError(f"Unknown topology: {topology}")
 
@@ -126,7 +141,7 @@ class TOPOS(nn.Module):
         """
         return self.router.route(mesh=mesh, chi=chi, V=V, E=E, F=F)
 
-    def forward(self, transports, idx_decoder, topology="auto", chi=None):
+    def forward(self, transports=None, idx_decoder=None, points=None, features=None, topology="auto", chi=None):
         """Full TOPOS forward pass.
 
         Stage 1 (OT Encoder) is pre-computed in the data pipeline.
@@ -142,6 +157,10 @@ class TOPOS(nn.Module):
             it will be dynamically adjusted (zero-padded / unsqueezed).
         idx_decoder : LongTensor
             Shape (n_target,). Maps latent grid indices → mesh vertices.
+        points : Tensor, optional
+            Physical coordinates, exclusively needed for "graph" fallback.
+        features : Tensor, optional
+            Physical point features, exclusively needed for "graph" fallback.
         topology : str
             "spherical", "toroidal", "volumetric", or "auto".
             If "auto", uses chi to determine routing.
@@ -169,8 +188,18 @@ class TOPOS(nn.Module):
                     f"does not match expected topology '{expected_topology}' for Euler characteristic chi={chi}."
                 )
 
-        # ---- Stage 3: Solve in latent space ----
+        # ---- Stage 3/4: Solve in mathematically routed space ----
         solver = self._get_solver(topology)
+
+        # Handle the Graph Fallback exception gracefully by bypassing Latent OT Maps completely
+        if topology == "graph":
+            if points is None or features is None:
+                raise ValueError("[TOPOS] Failed to execute Graph topological branch fallback because raw 'points' and 'features' tensors were not supplied.")
+            return solver(points, features)
+
+        # Standard Latent Mapping Dimensional Error Checking for OT Modules
+        if transports is None or idx_decoder is None:
+            raise ValueError("[TOPOS] Failed to execute Canonical Topological branches (Spherical/Toroidal/Volumetric) because 'transports' and 'idx_decoder' OT map tensors were omitted!")
 
         # Ensure spatial dimensionality of transports matches the chosen solver
         expected_dim = len(solver.n_modes)
@@ -228,6 +257,8 @@ class TOPOS(nn.Module):
             branches.append("toroidal (shared)")
         if self.volumetric_solver is not None:
             branches.append("volumetric")
+        if self.graph_solver is not None:
+            branches.append("graph (fallback)")
         return (
             f"TOPOS(\n"
             f"  branches={branches},\n"
