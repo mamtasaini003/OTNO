@@ -19,9 +19,10 @@ class OT3Dto2DMapper:
        mesh to the 3D embedded mathematical surface.
     4. Extracts Encoder / Decoder mappings via the "Mean" or "Max" strategy.
     """
-    def __init__(self, latent_topology="torus", expand_factor=2.0, device="cuda"):
+    def __init__(self, latent_topology="torus", expand_factor=2.0, width=None, device="cuda"):
         self.latent_topology = latent_topology.lower()
         self.expand_factor = expand_factor
+        self.width = width
         self.device = torch.device(device if torch.cuda.is_available() else "cpu")
         self.HAS_GEOMLOSS = HAS_GEOMLOSS
         
@@ -31,7 +32,7 @@ class OT3Dto2DMapper:
 
     def _generate_latent_torus(self, n_points, R=1.5, r=1.0):
         """ Embeds a 2D Square grid (width x width) into a 3D Torus. """
-        width = int(np.sqrt(self.expand_factor * n_points))
+        width = self.width if self.width is not None else int(np.sqrt(self.expand_factor * n_points))
         # Create 2D Square grid parameters
         theta = torch.linspace(0, 2 * np.pi, width + 1)[:-1]
         phi = torch.linspace(0, 2 * np.pi, width + 1)[:-1]
@@ -47,7 +48,7 @@ class OT3Dto2DMapper:
 
     def _generate_latent_sphere(self, n_points, R=1.0):
         """ Embeds a 2D Square grid (width x width) into a 3D Sphere. """
-        width = int(np.sqrt(self.expand_factor * n_points))
+        width = self.width if self.width is not None else int(np.sqrt(self.expand_factor * n_points))
         u = torch.linspace(0, 2 * np.pi, width)
         v = torch.linspace(0, np.pi, width)
         u, v = torch.meshgrid(u, v, indexing='ij')
@@ -55,6 +56,17 @@ class OT3Dto2DMapper:
         x = R * torch.cos(u) * torch.sin(v)
         y = R * torch.sin(u) * torch.sin(v)
         z = R * torch.cos(v)
+
+        latent_points_3d = torch.stack((x, y, z), dim=-1).reshape(-1, 3)
+        return latent_points_3d.to(self.device), width
+
+    def _generate_latent_volume(self, n_points, side=2.0):
+        """ Embeds a 3D Cartesian grid (width x width x width) into a 3D Volume. """
+        width = self.width if self.width is not None else int(np.cbrt(self.expand_factor * n_points))
+        x = torch.linspace(-side/2, side/2, width)
+        y = torch.linspace(-side/2, side/2, width)
+        z = torch.linspace(-side/2, side/2, width)
+        x, y, z = torch.meshgrid(x, y, z, indexing='ij')
 
         latent_points_3d = torch.stack((x, y, z), dim=-1).reshape(-1, 3)
         return latent_points_3d.to(self.device), width
@@ -73,6 +85,11 @@ class OT3Dto2DMapper:
             latent_mesh_3d, width = self._generate_latent_torus(N)
         elif self.latent_topology in ["sphere", "spherical"]:
             latent_mesh_3d, width = self._generate_latent_sphere(N)
+        elif self.latent_topology in ["volumetric"]:
+            latent_mesh_3d, width = self._generate_latent_volume(N)
+        elif self.latent_topology in ["graph"]:
+            # Graph topology does not use Sinkhorn mapping
+            return None, None, 0
         else:
             raise ValueError(f"Unknown latent topology: {self.latent_topology}")
 

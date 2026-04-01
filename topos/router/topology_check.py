@@ -141,18 +141,21 @@ class TopologicalRouter:
         genus = compute_genus(chi)
 
         if abs(chi - 2) <= self.chi_tol:
-            # Genus ≈ 0 (closed watertight surface) → spherical
+            # Genus 0: Closed watertight surface -> SFNO (Spherical)
             return self.SPHERICAL
         elif abs(chi - 0) <= self.chi_tol:
-            # Genus ≈ 1 (torus-like watertight surface) → toroidal
+            # Genus 1: Torus-like -> 2D FNO (Toroidal)
             return self.TOROIDAL
         elif abs(chi - 1) <= self.chi_tol:
-            # Open mesh (e.g., flat sheet/boundary, chi=1) → route to volumetric 
-            # (or could be 2D periodic with zero-padding)
+            # Open mesh (Euler char = 1 for a disk) -> 3D FNO (Volumetric)
+            return self.VOLUMETRIC
+        elif chi < 0:
+            # Higher genus (g > 1): Complex manifold -> 3D FNO (Volumetric)
+            # This captures genus 2, 3, etc.
             return self.VOLUMETRIC
         else:
-            # Higher genus or volumetric → Cartesian 3D grid
-            return self.VOLUMETRIC
+            # Non-standard or extremely high chi (often invalid meshes) -> GNO Fallback
+            return self.GRAPH
 
     def route_batch(self, chi_values):
         """Route a batch of geometries given their Euler characteristics.

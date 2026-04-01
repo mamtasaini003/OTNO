@@ -93,36 +93,40 @@ class VolumetricFNO(FNO):
             SpectralConvLayer=SpectralConv,
             **kwargs
     ):
-        super().__init__(
-            n_modes=n_modes,
-            hidden_channels=hidden_channels,
-            in_channels=in_channels,
-            out_channels=out_channels,
-            lifting_channels=lifting_channels,
-            projection_channels=projection_channels,
-            n_layers=n_layers,
-            positional_embedding=positional_embedding,
-            use_channel_mlp=use_mlp,
-            channel_mlp_dropout=mlp['dropout'] if mlp else 0,
-            channel_mlp_expansion=mlp['expansion'] if mlp else 0.5,
-            non_linearity=non_linearity,
-            norm=norm,
-            preactivation=preactivation,
-            fno_skip=fno_skip,
-            mlp_skip=mlp_skip,
-            separable=separable,
-            factorization=factorization,
-            rank=rank,
-            joint_factorization=joint_factorization,
-            fixed_rank_modes=fixed_rank_modes,
-            implementation=implementation,
-            decomposition_kwargs=decomposition_kwargs,
-            domain_padding=domain_padding,
-            domain_padding_mode=domain_padding_mode,
-            fft_norm=fft_norm,
-            SpectralConv=SpectralConvLayer,
-            **kwargs
-        )
+        nn.Module.__init__(self)
+        lifting_ratio = max(lifting_channels / hidden_channels, 1.0)
+        projection_ratio = max(projection_channels / hidden_channels, 1.0)
+
+        # Use explicitly provided args or filter from config
+        fno_kwargs = {
+            'n_modes': n_modes,
+            'in_channels': in_channels,
+            'out_channels': out_channels,
+            'hidden_channels': hidden_channels,
+            'lifting_channel_ratio': lifting_ratio,
+            'projection_channel_ratio': projection_ratio,
+            'n_layers': n_layers,
+            'positional_embedding': positional_embedding,
+            'use_channel_mlp': use_mlp,
+            'channel_mlp_dropout': mlp['dropout'] if mlp else 0,
+            'channel_mlp_expansion': mlp['expansion'] if mlp else 0.5,
+            'non_linearity': non_linearity,
+            'norm': norm,
+            'preactivation': preactivation,
+            'fno_skip': fno_skip,
+            'channel_mlp_skip': mlp_skip,
+            'separable': separable,
+            'factorization': factorization,
+            'rank': rank,
+            'fixed_rank_modes': fixed_rank_modes,
+            'implementation': implementation,
+            'decomposition_kwargs': decomposition_kwargs,
+            'domain_padding': domain_padding,
+            'conv_module': SpectralConvLayer,
+        }
+        
+        # Clean up any None or extra values if necessary, then call init
+        FNO.__init__(self, **fno_kwargs)
 
         # Override projection to 1D (point-cloud output after decoder indexing)
         self.projection = NeuralopMLP(

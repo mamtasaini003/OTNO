@@ -32,3 +32,4 @@ dataset:
   test_samples: 111
   resolution: 64         # Latent grid (32x32 or 64x64)
   expand_factor: 2.0
+  cache_dir: "/media/HDD/mamta_backup/datasets/otno/car-pressure-data/dynamic_cache/topos"
