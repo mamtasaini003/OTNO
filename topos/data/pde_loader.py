@@ -3,6 +3,7 @@ import numpy as np
 import torch
 import xarray as xr
 import netCDF4
+from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 from torch.utils.data import Dataset, DataLoader, ConcatDataset
 
@@ -187,6 +188,7 @@ class PDEDataset(Dataset):
         max_samples: Optional[int] = None,
         c_stats: Optional[tuple] = None,
         u_stats: Optional[tuple] = None,
+        ot_cache_dir: Optional[str] = None,
     ):
         super().__init__()
         if dataset_name not in BENCHMARK_METADATA:
@@ -198,6 +200,7 @@ class PDEDataset(Dataset):
         self.dataset_name = dataset_name
         self.meta_info = BENCHMARK_METADATA[dataset_name]
         self.split = split
+        self.ot_cache_dir = ot_cache_dir or os.environ.get("TOPOS_OT_CACHE_DIR")
 
         # Load NetCDF (checks both custom benchmark subdirs and gaot subdir)
         # Try primary path
@@ -312,10 +315,15 @@ class PDEDataset(Dataset):
         self._load_ot_maps()
 
     def _load_ot_maps(self, res=64):
-        ot_path = f"/home/mamta/work/OTNO/scripts/benchmarks/ot_cache/{self.dataset_name}_ot_res{res}.pt"
-        if os.path.exists(ot_path):
+        if self.ot_cache_dir is not None:
+            ot_cache_dir = Path(self.ot_cache_dir)
+        else:
+            # Default to repo-local cache: <repo>/scripts/benchmarks/ot_cache
+            ot_cache_dir = Path(__file__).resolve().parents[2] / "scripts" / "benchmarks" / "ot_cache"
+        ot_path = ot_cache_dir / f"{self.dataset_name}_ot_res{res}.pt"
+        if ot_path.exists():
             try:
-                ot_data = torch.load(ot_path, map_location='cpu')
+                ot_data = torch.load(str(ot_path), map_location='cpu')
                 # Note: indices in ot_data were for ALL samples in the file.
                 enc_all = ot_data['indices_encoder']
                 dec_all = ot_data['indices_decoder']
@@ -392,6 +400,7 @@ class MixedTopologyDataset(Dataset):
         normalize: bool = True,
         seed: int = 42,
         max_samples_per_dataset: Optional[int] = None,
+        ot_cache_dir: Optional[str] = None,
     ):
         super().__init__()
         self.datasets = []
@@ -409,6 +418,7 @@ class MixedTopologyDataset(Dataset):
                 test_ratio=test_ratio,
                 normalize=normalize,
                 seed=seed,
+                ot_cache_dir=ot_cache_dir,
             )
             n = len(ds)
             if max_samples_per_dataset is not None and n > max_samples_per_dataset:
@@ -468,6 +478,7 @@ def get_pde_dataloaders(
     max_samples: Optional[int] = None,
     c_stats: Optional[tuple] = None,
     u_stats: Optional[tuple] = None,
+    ot_cache_dir: Optional[str] = None,
 ) -> Tuple[DataLoader, DataLoader, DataLoader]:
     """Get train/val/test DataLoaders for a single PDE dataset."""
     train_dataset = PDEDataset(
@@ -481,7 +492,8 @@ def get_pde_dataloaders(
         seed=seed,
         max_samples=max_samples,
         c_stats=c_stats,
-        u_stats=u_stats
+        u_stats=u_stats,
+        ot_cache_dir=ot_cache_dir,
     )
     val_dataset = PDEDataset(
         dataset_name,
@@ -494,7 +506,8 @@ def get_pde_dataloaders(
         seed=seed,
         max_samples=max_samples,
         c_stats=c_stats,
-        u_stats=u_stats
+        u_stats=u_stats,
+        ot_cache_dir=ot_cache_dir,
     )
     test_dataset = PDEDataset(
         dataset_name,
@@ -507,7 +520,8 @@ def get_pde_dataloaders(
         seed=seed,
         max_samples=max_samples,
         c_stats=c_stats,
-        u_stats=u_stats
+        u_stats=u_stats,
+        ot_cache_dir=ot_cache_dir,
     )
 
     train_loader = DataLoader(
@@ -545,6 +559,7 @@ def get_mixed_topology_dataloaders(
     normalize: bool = True,
     seed: int = 42,
     max_samples_per_dataset: Optional[int] = None,
+    ot_cache_dir: Optional[str] = None,
 ) -> Tuple[DataLoader, DataLoader, DataLoader]:
     """
     Get train/val/test DataLoaders for a mixed-topology dataset.
@@ -570,6 +585,7 @@ def get_mixed_topology_dataloaders(
             normalize=normalize,
             seed=seed,
             max_samples_per_dataset=max_samples_per_dataset,
+            ot_cache_dir=ot_cache_dir,
         )
         loaders[split] = DataLoader(
             ds,

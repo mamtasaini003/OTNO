@@ -9,6 +9,7 @@ Usage examples:
 """
 
 import argparse
+import copy
 import os
 import sys
 import numpy as np
@@ -17,7 +18,6 @@ from torch.utils.data import DataLoader
 from timeit import default_timer
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__))))
-sys.path.append('/home/mamta/work/neuraloperator')
 from topos.utils import LpLoss, count_model_params
 
 # Import data loaders from the training script
@@ -25,7 +25,8 @@ from topos_train import (
     load_shapenet_data,
     load_flowbench_data,
     get_default_spherical_config,
-    get_default_volumetric_config
+    get_default_volumetric_config,
+    resolve_routing_for_batch,
 )
 from topos.models.topos import TOPOS
 
@@ -53,6 +54,26 @@ def parse_args():
                         help="Latent shape (flowbench only).")
     parser.add_argument('--expand_factor', type=int, default=2, choices=[1, 2, 3, 4],
                         help="Expand factor (flowbench only).")
+
+    # Data locations (shared with training script)
+    parser.add_argument(
+        '--data_root',
+        type=str,
+        default=os.environ.get('TOPOS_DATA_ROOT'),
+        help="Root directory containing dataset families (env: TOPOS_DATA_ROOT).",
+    )
+    parser.add_argument(
+        '--shapenet_data_path',
+        type=str,
+        default=os.environ.get('TOPOS_SHAPENET_DATA'),
+        help="Absolute/relative path to ShapeNet OT tensor file (env: TOPOS_SHAPENET_DATA).",
+    )
+    parser.add_argument(
+        '--flowbench_root',
+        type=str,
+        default=os.environ.get('TOPOS_FLOWBENCH_ROOT'),
+        help="Root of FlowBench LDC_NS_2D directory (env: TOPOS_FLOWBENCH_ROOT).",
+    )
     
     # Save predictions
     parser.add_argument('--save_predictions', action='store_true',
@@ -70,6 +91,7 @@ def infer_shapenet(args, device):
 
     model = TOPOS(
         spherical_config=spherical_config,
+        toroidal_config=copy.deepcopy(spherical_config) if args.topology in ('auto', 'toroidal') else None,
         volumetric_config=volumetric_config,
         default_topology=args.topology,
     )
@@ -117,10 +139,15 @@ def infer_shapenet(args, device):
                 dim=1,
             )
 
-            topology = args.topology if args.topology != 'auto' else 'spherical'
+            topology, chi = resolve_routing_for_batch(
+                args,
+                batch_data,
+                default_chi=2.0,
+                default_topology="spherical",
+            )
             
             # Run model
-            out = model(transports, indices_decoder, topology=topology)
+            out = model(transports, indices_decoder, topology=topology, chi=chi)
             
             # Decode output back to physical scale
             out_decoded = pressure_encoder.decode(out)
@@ -160,6 +187,7 @@ def infer_flowbench(args, device):
 
     model = TOPOS(
         spherical_config=spherical_config,
+        toroidal_config=copy.deepcopy(spherical_config) if args.topology in ('auto', 'toroidal') else None,
         volumetric_config=volumetric_config,
         default_topology=args.topology,
     )
@@ -191,11 +219,17 @@ def infer_flowbench(args, device):
             output = batch_data['outputs'][0].to(device)
             indices_decoder = batch_data['indices_decoder'][0].to(dtype=torch.long, device=device)
 
-            topology = args.topology if args.topology != 'auto' else 'spherical'
+            topology, chi = resolve_routing_for_batch(
+                args,
+                batch_data,
+                default_chi=0.0,
+                default_topology="toroidal",
+            )
             predict = model(
                 inp.permute(0, 3, 1, 2).to(dtype=torch.float32, device=device),
                 indices_decoder,
                 topology=topology,
+                chi=chi,
             )
             
             predict_decoded = output_encoder.decode(predict)

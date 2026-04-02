@@ -20,22 +20,103 @@ Usage examples:
 """
 
 import argparse
+import copy
 import csv
 import os
 import sys
+import warnings
+from pathlib import Path
 import numpy as np
 import torch
 from torch.utils.data import DataLoader, Dataset
 from timeit import default_timer
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__))))
-sys.path.append('/home/mamta/work/neuraloperator')
 
 from topos.utils import (
     LpLoss, count_model_params, UnitGaussianNormalizer,
     DictDataset, DictDatasetWithConstant, CombinedLoss,
 )
 from topos.models.topos import TOPOS
+
+
+# ============================================================
+# Routing helpers
+# ============================================================
+
+def _first_scalar(value):
+    """Extract a Python scalar from common batch container types."""
+    if isinstance(value, torch.Tensor):
+        if value.numel() == 0:
+            return None
+        return value.reshape(-1)[0].item()
+    if isinstance(value, np.ndarray):
+        if value.size == 0:
+            return None
+        return value.reshape(-1)[0].item()
+    if isinstance(value, (list, tuple)):
+        if len(value) == 0:
+            return None
+        return _first_scalar(value[0])
+    return value
+
+
+def _first_string(value):
+    scalar = _first_scalar(value)
+    if scalar is None:
+        return None
+    if isinstance(scalar, bytes):
+        return scalar.decode("utf-8")
+    if isinstance(scalar, str):
+        return scalar
+    return str(scalar)
+
+
+def _extract_meta_value(batch_data, key):
+    meta = batch_data.get("meta")
+    if isinstance(meta, dict):
+        return meta.get(key)
+    return None
+
+
+def resolve_routing_for_batch(args, batch_data, default_chi=None, default_topology="spherical"):
+    """Resolve topology and chi for a batch.
+
+    If `args.topology != "auto"`, honors the explicit topology.
+    If `args.topology == "auto"`, prefers chi from batch data/meta and
+    falls back to explicit per-sample topology labels when provided.
+    """
+    if args.topology != "auto":
+        return args.topology, None
+
+    chi_sources = [
+        batch_data.get("chi"),
+        batch_data.get("euler_chi"),
+        _extract_meta_value(batch_data, "euler_chi"),
+        _extract_meta_value(batch_data, "chi"),
+    ]
+    for candidate in chi_sources:
+        chi = _first_scalar(candidate)
+        if chi is not None:
+            return "auto", float(chi)
+
+    if default_chi is not None:
+        return "auto", float(default_chi)
+
+    topology_sources = [
+        batch_data.get("topology"),
+        _extract_meta_value(batch_data, "topology"),
+    ]
+    for candidate in topology_sources:
+        topology = _first_string(candidate)
+        if topology in {"spherical", "toroidal", "volumetric", "graph"}:
+            return topology, None
+
+    warnings.warn(
+        "[TOPOS WARNING] --topology auto requested, but no per-sample chi/topology found. "
+        f"Falling back to topology='{default_topology}'."
+    )
+    return default_topology, None
 
 
 # ============================================================
@@ -135,8 +216,17 @@ def load_shapenet_data(args):
     R, r = 1.5, 1.0
     n_train, n_test = 500, 111
 
-    data_path = f'/media/HDD/mamta_backup/datasets/topos/shapenet/torus_OTmean_geomloss_expand{expand_factor}.pt'
-    data = torch.load(data_path)
+    if args.shapenet_data_path:
+        data_path = Path(args.shapenet_data_path)
+    elif args.data_root:
+        data_path = Path(args.data_root) / "shapenet" / f"torus_OTmean_geomloss_expand{expand_factor}.pt"
+    else:
+        raise ValueError(
+            "ShapeNet data path not set. Provide --shapenet_data_path or --data_root "
+            "(or env TOPOS_SHAPENET_DATA / TOPOS_DATA_ROOT)."
+        )
+
+    data = torch.load(str(data_path))
     print(f"Loaded: {data_path}")
 
     train_transports = data['transports'][:n_train]
@@ -190,13 +280,23 @@ def load_flowbench_data(args):
     expand_factor = args.expand_factor
     latent_res = int(np.sqrt(resolution * resolution * expand_factor))
 
+    if args.flowbench_root:
+        flowbench_root = Path(args.flowbench_root)
+    elif args.data_root:
+        flowbench_root = Path(args.data_root) / "flowbench" / "LDC_NS_2D"
+    else:
+        raise ValueError(
+            "FlowBench root not set. Provide --flowbench_root or --data_root "
+            "(or env TOPOS_FLOWBENCH_ROOT / TOPOS_DATA_ROOT)."
+        )
+
     data_path = (
-        f'/media/HDD/mamta_backup/datasets/topos/flowbench/LDC_NS_2D/'
-        f'{resolution}x{resolution}/ot-data/'
-        f'LDC_NS_2D_boundary_{resolution}_{group_name}_{args.latent_shape}'
-        f'_expand{expand_factor}_reg1e-6_combined.pt'
+        flowbench_root
+        / f"{resolution}x{resolution}"
+        / "ot-data"
+        / f"LDC_NS_2D_boundary_{resolution}_{group_name}_{args.latent_shape}_expand{expand_factor}_reg1e-6_combined.pt"
     )
-    data = torch.load(data_path)
+    data = torch.load(str(data_path))
     print(f"Loaded: {data_path}")
 
     train_inputs = data['inputs'][:n_train]
@@ -255,6 +355,7 @@ def train_shapenet(args):
 
     model = TOPOS(
         spherical_config=spherical_config,
+        toroidal_config=copy.deepcopy(spherical_config) if args.topology in ('auto', 'toroidal') else None,
         volumetric_config=volumetric_config,
         default_topology=args.topology,
     )
@@ -298,8 +399,13 @@ def train_shapenet(args):
             )
 
             # Forward through TOPOS
-            topology = args.topology if args.topology != 'auto' else 'spherical'
-            out = model(transports, indices_decoder, topology=topology)
+            topology, chi = resolve_routing_for_batch(
+                args,
+                batch_data,
+                default_chi=2.0,
+                default_topology="spherical",
+            )
+            out = model(transports, indices_decoder, topology=topology, chi=chi)
 
             loss = loss_fn(out, pressures)
             loss.backward()
@@ -328,8 +434,13 @@ def train_shapenet(args):
                     dim=1,
                 )
 
-                topology = args.topology if args.topology != 'auto' else 'spherical'
-                out = model(transports, indices_decoder, topology=topology)
+                topology, chi = resolve_routing_for_batch(
+                    args,
+                    batch_data,
+                    default_chi=2.0,
+                    default_topology="spherical",
+                )
+                out = model(transports, indices_decoder, topology=topology, chi=chi)
                 out = pressure_encoder.decode(out)
 
                 test_l2 += data_loss(out, pressures).item()
@@ -369,6 +480,7 @@ def train_flowbench(args):
 
     model = TOPOS(
         spherical_config=spherical_config,
+        toroidal_config=copy.deepcopy(spherical_config) if args.topology in ('auto', 'toroidal') else None,
         volumetric_config=volumetric_config,
         default_topology=args.topology,
     )
@@ -396,11 +508,17 @@ def train_flowbench(args):
             output = batch_data['outputs'].to(device)
             indices_decoder = batch_data['indices_decoder'][0].to(dtype=torch.long, device=device)
 
-            topology = args.topology if args.topology != 'auto' else 'spherical'
+            topology, chi = resolve_routing_for_batch(
+                args,
+                batch_data,
+                default_chi=0.0,
+                default_topology="toroidal",
+            )
             predict = model(
                 inp.permute(0, 3, 1, 2).to(dtype=torch.float32, device=device),
                 indices_decoder,
                 topology=topology,
+                chi=chi,
             )
 
             loss = loss_fn(output, predict)
@@ -417,11 +535,17 @@ def train_flowbench(args):
                 output = batch_data['outputs'][0].to(device)
                 indices_decoder = batch_data['indices_decoder'][0].to(dtype=torch.long, device=device)
 
-                topology = args.topology if args.topology != 'auto' else 'spherical'
+                topology, chi = resolve_routing_for_batch(
+                    args,
+                    batch_data,
+                    default_chi=0.0,
+                    default_topology="toroidal",
+                )
                 predict = model(
                     inp.permute(0, 3, 1, 2).to(dtype=torch.float32, device=device),
                     indices_decoder,
                     topology=topology,
+                    chi=chi,
                 )
                 predict = output_encoder.decode(predict)
                 loss = data_loss(output.unsqueeze(0), predict)
@@ -495,6 +619,26 @@ def parse_args():
                         help="Latent shape (flowbench only).")
     parser.add_argument('--expand_factor', type=int, default=2, choices=[1, 2, 3, 4],
                         help="Expand factor (flowbench only).")
+
+    # Data locations
+    parser.add_argument(
+        '--data_root',
+        type=str,
+        default=os.environ.get('TOPOS_DATA_ROOT'),
+        help="Root directory containing dataset families (env: TOPOS_DATA_ROOT).",
+    )
+    parser.add_argument(
+        '--shapenet_data_path',
+        type=str,
+        default=os.environ.get('TOPOS_SHAPENET_DATA'),
+        help="Absolute/relative path to ShapeNet OT tensor file (env: TOPOS_SHAPENET_DATA).",
+    )
+    parser.add_argument(
+        '--flowbench_root',
+        type=str,
+        default=os.environ.get('TOPOS_FLOWBENCH_ROOT'),
+        help="Root of FlowBench LDC_NS_2D directory (env: TOPOS_FLOWBENCH_ROOT).",
+    )
 
     return parser.parse_args()
 

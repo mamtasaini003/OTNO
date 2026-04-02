@@ -139,6 +139,16 @@ class TestTOPOSRouting:
         with pytest.raises(ValueError, match="Euler characteristic"):
             model_full(x, idx, topology='auto')
 
+    def test_auto_routes_to_toroidal_solver_when_configured(self):
+        """chi=0 should route to toroidal branch when toroidal config is present."""
+        model = TOPOS(
+            spherical_config=SPHERICAL_CONFIG,
+            toroidal_config=SPHERICAL_CONFIG.copy(),
+            volumetric_config=VOLUMETRIC_CONFIG,
+        )
+        solver = model._get_solver(model.route(chi=0))
+        assert solver is model.toroidal_solver
+
     def test_volumetric_not_configured_raises(self):
         """Requesting volumetric without configuring it should raise."""
         model = TOPOS(spherical_config=SPHERICAL_CONFIG)
