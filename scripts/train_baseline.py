@@ -23,7 +23,7 @@ def tqdm_print(msg):
 def main():
     parser = argparse.ArgumentParser(description="Baseline Operator Trainer")
     parser.add_argument('--config', type=str, required=True, help="Path to baseline config")
-    parser.add_argument('--model', type=str, required=True, choices=['fno', 'gino', 'deeponet', 'gaot', 'ufno', 'otno'], help="Model architecture")
+    parser.add_argument('--model', type=str, required=True, choices=['fno', 'gino', 'deeponet', 'ufno', 'otno'], help="Model architecture")
     parser.add_argument('--epochs', type=int, default=None, help="Override epochs from config")
     args = parser.parse_args()
 

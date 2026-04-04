@@ -1,0 +1,75 @@
+# Fair mixed-genus comparison config shared by TOPOS and baseline models.
+# Uses the same synthetic mixed-genus dataset protocol across models.
+
+model:
+  n_modes: [16, 16]
+  hidden_channels: 120
+  in_channels: 9
+  out_channels: 1
+  n_layers: 4
+  norm: "group_norm"
+  use_mlp: true
+  mlp:
+    expansion: 1.0
+    dropout: 0.0
+  factorization: "tucker"
+  rank: 0.4
+  domain_padding: 0.125
+  n_heads: 8
+
+training:
+  n_epochs: 151
+  batch_size: 1
+  learning_rate: 0.001
+  weight_decay: 0.0001
+  scheduler: "StepLR"
+  step_size: 50
+  gamma: 0.5
+  seed: 42
+
+dataset:
+  name: "mixed_genus_synthetic_fair"
+  train_samples: 500
+  test_samples: 111
+  resolution: 64
+  expand_factor: 2.0
+  num_points: 3586
+  cache_dir: "/media/HDD/mamta_backup/datasets/otno/car-pressure-data/dynamic_cache/topos"
+
+output:
+  dir: "results"
+
+gino_official:
+  in_channels: 1
+  latent_grid_size: [16, 16, 16]
+  n_modes: [16, 16, 16]
+  hidden_channels: 120
+  n_layers: 4
+  latent_feature_channels: null
+  in_gno_radius: 0.2
+  out_gno_radius: 0.2
+  in_gno_transform_type: "linear"
+  out_gno_transform_type: "linear"
+  in_gno_pos_embed_type: "transformer"
+  out_gno_pos_embed_type: "transformer"
+  gno_embed_channels: 32
+  in_gno_channel_mlp_hidden_layers: [80, 80, 80]
+  out_gno_channel_mlp_hidden_layers: [256, 256]
+
+fno_official:
+  in_channels: 1
+  grid_size: [16, 16, 16]
+  n_modes: [16, 16, 16]
+  hidden_channels: 120
+  n_layers: 4
+  norm: "group_norm"
+  use_mlp: true
+  mlp_expansion: 1.0
+  mlp_dropout: 0.0
+  factorization: "tucker"
+  rank: 0.4
+  domain_padding: 0.125
+  positional_embedding: "grid"
+
+deeponet:
+  branch_points: 256

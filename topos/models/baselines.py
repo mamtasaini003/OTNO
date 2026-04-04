@@ -32,22 +32,6 @@ class DeepONet(nn.Module):
         out = torch.einsum("bd,bnd->bn", branch_out, trunk_out)
         return out + self.bias
 
-class GAOT(nn.Module):
-    """Geometry-Aware Operator Transformer baseline."""
-    def __init__(self, in_channels, out_channels, hidden_dim=64, n_heads=4, n_layers=2):
-        super().__init__()
-        self.lifting = nn.Linear(in_channels, hidden_dim)
-        encoder_layer = nn.TransformerEncoderLayer(d_model=hidden_dim, nhead=n_heads, batch_first=True)
-        self.transformer = nn.TransformerEncoder(encoder_layer, num_layers=n_layers)
-        self.projection = nn.Linear(hidden_dim, out_channels)
-
-    def forward(self, x):
-        # x: (B, N, C)
-        x = self.lifting(x)
-        x = self.transformer(x)
-        x = self.projection(x)
-        return x
-
 class UFNO(nn.Module):
     """U-Net FNO baseline (multi-scale FNO)."""
     def __init__(self, in_channels, out_channels, n_modes=(16, 16), hidden_channels=32):
@@ -67,8 +51,6 @@ def model_factory(model_type, config):
         return GINO(**config)
     elif model_type == "deeponet":
         return DeepONet(**config)
-    elif model_type == "gaot":
-        return GAOT(**config)
     elif model_type == "ufno":
         return UFNO(**config)
     elif model_type == "topos":

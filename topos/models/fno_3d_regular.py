@@ -6,7 +6,7 @@ in a regular Cartesian grid [0,1]³ — e.g., bounding-box regions, higher-genus
 surfaces that don't map cleanly to sphere or torus.
 
 Uses 3D spectral convolutions via neuralop's FNO with n_modes=(M1, M2, M3).
-To compete with transformer-based local attention mechanisms (e.g., GAOT), 
+To compete with strong geometry-aware operator baselines,
 ensure high enough mode-cut is used to capture high-frequency details 
 in the [0,1]³ latent space.
 """

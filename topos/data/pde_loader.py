@@ -9,10 +9,10 @@ from torch.utils.data import Dataset, DataLoader, ConcatDataset
 
 
 # ─── Benchmark Metadata ────────────────────────────────────────────────────────
-# This registry contains both external benchmarks (GAOT) and custom TOPOS benchmarks.
+# This registry contains both external PDE benchmarks and custom TOPOS benchmarks.
 
 BENCHMARK_METADATA = {
-    # ── External: GAOT Benchmark (Elliptic PDEs) ──
+    # ── External Elliptic/Flow Benchmarks ──
     # Elliptic PDEs (Poisson-like) - fixed coordinates
     'Poisson-Gauss': {
         'file': 'Poisson-Gauss.nc',
@@ -202,11 +202,11 @@ class PDEDataset(Dataset):
         self.split = split
         self.ot_cache_dir = ot_cache_dir or os.environ.get("TOPOS_OT_CACHE_DIR")
 
-        # Load NetCDF (checks both custom benchmark subdirs and gaot subdir)
+        # Load NetCDF (checks both custom benchmark subdirs and a legacy fallback subdir)
         # Try primary path
         filepath = os.path.join(base_path, self.meta_info['file'])
         if not os.path.exists(filepath):
-            # Fallback to gaot/ prefix for legacy paths
+            # Fallback to the legacy benchmark subdirectory layout
             filepath = os.path.join(base_path, 'gaot', self.meta_info['file'])
             
         if not os.path.exists(filepath):
@@ -380,7 +380,7 @@ class PDEDataset(Dataset):
 
 class MixedTopologyDataset(Dataset):
     """
-    Combines multiple GAOT datasets with different topologies into one dataset.
+    Combines multiple external PDE datasets with different topologies into one dataset.
     Used for Tier-1 TOPOS router testing: the model must correctly route
     samples from different topologies to the appropriate FNO branch.
 

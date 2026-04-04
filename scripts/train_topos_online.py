@@ -11,10 +11,14 @@ from timeit import default_timer
 from torch.utils.data import DataLoader, Dataset
 from tqdm import tqdm
 import matplotlib.pyplot as plt
+try:
+    import wandb
+except Exception:
+    wandb = None
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from topos.models import TOPOS
-from topos.utils import LpLoss, UnitGaussianNormalizer
+from topos.utils import LpLoss, UnitGaussianNormalizer, prepare_model_for_devices, resolve_device
 from topos.data.ot_mapper_3d import OT3Dto2DMapper
 from topos.router.topology_check import TopologicalRouter, compute_euler_characteristic
 
@@ -293,14 +297,37 @@ def load_config(config_path):
 
 def main():
     parser = argparse.ArgumentParser(description="TOPOS Unified Trainer for Synthetic Generation")
-    parser.add_argument('--config', type=str, default='configs/abc_comparison.yaml')
+    parser.add_argument('--config', type=str, default='configs/mixed_genus_fair_comparison.yaml')
     parser.add_argument('--epochs', type=int, default=None)
+    parser.add_argument('--wandb', action='store_true')
+    parser.add_argument('--wandb_project', type=str, default='otno-topos-mixed-geometry')
+    parser.add_argument('--wandb_entity', type=str, default=os.environ.get('WANDB_ENTITY', 'mamtapc003-zenteiq-ai'))
+    parser.add_argument('--wandb_run_name', type=str, default=None)
+    parser.add_argument('--gpus', type=str, default='auto', help='GPU selection: "auto", "cpu", "0", "1", "0,1", or "all"')
     args = parser.parse_args()
 
     config = load_config(args.config)
     if args.epochs:
         config['training']['n_epochs'] = args.epochs
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    set_seed(config['training'].get('seed', 42))
+    device, gpu_ids = resolve_device(args.gpus)
+    print(f"[*] Using device {device}" + (f" with GPUs {gpu_ids}" if gpu_ids else ""))
+    wandb_run = None
+    if args.wandb:
+        if wandb is None:
+            print("[!] wandb requested but not installed. Continuing without wandb logging.")
+        else:
+            try:
+                wandb_run = wandb.init(
+                    project=args.wandb_project,
+                    entity=args.wandb_entity,
+                    name=args.wandb_run_name,
+                    config=config,
+                    tags=["topos", "online", "mixed-genus", "router"],
+                )
+            except Exception as e:
+                print(f"[!] wandb init failed: {e}. Continuing without wandb logging.")
+                wandb_run = None
     
     cache_dir = config['dataset'].get('cache_dir', None)
     if cache_dir:
@@ -367,7 +394,8 @@ def main():
         toroidal_config=toroidal_config,
         volumetric_config=volumetric_config,
         graph_config=graph_config
-    ).to(device)
+    )
+    model, device, gpu_ids = prepare_model_for_devices(model, args.gpus)
 
     optimizer = torch.optim.Adam(model.parameters(), lr=config['training']['learning_rate'], weight_decay=config['training']['weight_decay'])
     scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=config['training']['step_size'], gamma=config['training']['gamma'])
@@ -568,11 +596,35 @@ def main():
             f"RouterTrain[{', '.join(routed_train_parts)}], RouterTest[{', '.join(routed_test_parts)}], "
             f"Time: {default_timer()-t1:.2f}s"
         )
+        if wandb_run is not None:
+            metrics = {
+                "epoch": ep + 1,
+                "train/l2": train_l2,
+                "test/l2": test_l2,
+                "train/lr": optimizer.param_groups[0]["lr"],
+            }
+            for topo in sorted(train_topo_count.keys()):
+                metrics[f"train/topology_{topo}"] = train_topo_history[topo][-1]
+            for topo in sorted(test_topo_count.keys()):
+                metrics[f"test/topology_{topo}"] = test_topo_history[topo][-1]
+            for route, count in sorted(routed_count.items()):
+                metrics[f"router/train_{route}"] = count
+            for route, count in sorted(test_routed_count.items()):
+                metrics[f"router/test_{route}"] = count
+            wandb_run.log(metrics, step=ep + 1)
 
     out_dir = config.get("output", {}).get("dir", "results")
     plot_prefix = os.path.join(out_dir, "topos_online_mixed")
     save_loss_plots(train_losses, test_losses, train_topo_history, test_topo_history, plot_prefix)
     print(f"[*] Saved TOPOS loss plots: {plot_prefix}_overall.png and {plot_prefix}_per_topology.png")
+    if wandb_run is not None:
+        overall_plot = f"{plot_prefix}_overall.png"
+        topo_plot = f"{plot_prefix}_per_topology.png"
+        if os.path.exists(overall_plot):
+            wandb_run.log({"plots/overall": wandb.Image(overall_plot)})
+        if os.path.exists(topo_plot):
+            wandb_run.log({"plots/per_topology": wandb.Image(topo_plot)})
+        wandb_run.finish()
 
 if __name__ == "__main__":
     main()
