@@ -1,0 +1,8 @@
+TOPOS is designed to support a wide range of geometries by routing them to specialized latent workbenches based on their topology (genus). According to the implementation in topos/router/topology_check.py, it supports:
+
+Genus 0 ($\chi \approx 2$): Routed to the Spherical branch. This is for closed, watertight surfaces like spheres or similar box-like manifolds.
+Genus 1 ($\chi \approx 0$): Routed to the Toroidal branch. This is for torus-like geometries (shapes with one "hole") using 2D periodic FNOs.
+Open Surfaces ($\chi \approx 1$): Routed to the Volumetric branch. This includes objects like disks or open meshes that are treated as 3D Cartesian volumes or padded grids.
+Higher Genus ($g > 1, \chi < 0$): Routed to the Volumetric branch. For complex geometries with multiple holes (genus 2, 3, etc.), TOPOS defaults to a 3D Cartesian grid solver to handle the increased topological complexity.
+Non-manifold / Extreme Euler structures: Routed to the Graph Fallback branch. If a mesh is too "broken" or non-manifold for standard spectral solvers, it falls back to a Graph Neural Operator (GNO) using message passing.
+In short, it theoretically supports any genus, but it handles $g=0$ and $g=1$ with optimized 2D spectral solvers, while $g > 1$ or open shapes are solved in a 3D volumetric latent space.
