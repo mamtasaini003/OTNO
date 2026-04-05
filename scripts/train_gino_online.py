@@ -114,7 +114,7 @@ def main():
         n_train=config["dataset"]["train_samples"],
         n_test=config["dataset"]["test_samples"],
         split="train",
-        expand_factor=config["dataset"]["expand_factor"],
+        expand_factor=config["dataset"].get("expand_factor", 2.0),
         num_points=config["dataset"].get("num_points", 3586),
         base_seed=config["training"].get("seed", 42),
         latent_grid_size=latent_grid_size,
@@ -124,7 +124,7 @@ def main():
         n_train=config["dataset"]["train_samples"],
         n_test=config["dataset"]["test_samples"],
         split="test",
-        expand_factor=config["dataset"]["expand_factor"],
+        expand_factor=config["dataset"].get("expand_factor", 2.0),
         num_points=config["dataset"].get("num_points", 3586),
         base_seed=config["training"].get("seed", 42),
         latent_grid_size=latent_grid_size,
@@ -243,6 +243,14 @@ def main():
             wandb_run.log(metrics, step=ep + 1)
 
     out_dir = config.get("output", {}).get("dir", "results")
+
+    chk_dir = os.path.join(out_dir, "checkpoints")
+    os.makedirs(chk_dir, exist_ok=True)
+    chk_path = os.path.join(chk_dir, "gino_mixed_genus.pt")
+    model_state = model.module.state_dict() if hasattr(model, 'module') else model.state_dict()
+    torch.save(model_state, chk_path)
+    print(f"[*] Saved GINO weights to: {chk_path}")
+
     prefix = os.path.join(out_dir, "gino_online_mixed")
     save_loss_plots(train_losses, test_losses, test_topo_history, prefix)
     print(f"[*] Saved GINO loss plots: {prefix}_overall.png and {prefix}_per_topology.png")

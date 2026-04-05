@@ -614,6 +614,14 @@ def main():
             wandb_run.log(metrics, step=ep + 1)
 
     out_dir = config.get("output", {}).get("dir", "results")
+    
+    chk_dir = os.path.join(out_dir, "checkpoints")
+    os.makedirs(chk_dir, exist_ok=True)
+    chk_path = os.path.join(chk_dir, "topos_mixed_genus.pt")
+    model_state = model.module.state_dict() if hasattr(model, 'module') else model.state_dict()
+    torch.save(model_state, chk_path)
+    print(f"[*] Saved TOPOS weights to: {chk_path}")
+
     plot_prefix = os.path.join(out_dir, "topos_online_mixed")
     save_loss_plots(train_losses, test_losses, train_topo_history, test_topo_history, plot_prefix)
     print(f"[*] Saved TOPOS loss plots: {plot_prefix}_overall.png and {plot_prefix}_per_topology.png")

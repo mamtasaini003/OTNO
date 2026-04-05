@@ -72,6 +72,62 @@ class UnitGaussianNormalizer:
         self.std = self.std.to(device)
         return self
 
+
+def parse_gpu_ids(gpus: Optional[Union[str, int, List[int], tuple]] = None) -> List[int]:
+    """Parse a GPU selection into a list of CUDA device ids.
+
+    Accepted values:
+      - None / "auto" / "" -> [0] if CUDA is available
+      - "cpu" -> []
+      - "all" -> all visible CUDA devices
+      - "0" / "1" / "0,1" -> selected CUDA devices
+      - int / list[int] / tuple[int, ...]
+    """
+    if not torch.cuda.is_available():
+        return []
+
+    device_count = torch.cuda.device_count()
+
+    if gpus is None:
+        return [0]
+    if isinstance(gpus, int):
+        gpu_ids = [gpus]
+    elif isinstance(gpus, (list, tuple)):
+        gpu_ids = [int(g) for g in gpus]
+    else:
+        raw = str(gpus).strip().lower()
+        if raw in {"", "auto"}:
+            return [0]
+        if raw == "cpu":
+            return []
+        if raw == "all":
+            return list(range(device_count))
+        gpu_ids = [int(part.strip()) for part in raw.split(",") if part.strip()]
+
+    invalid = [gid for gid in gpu_ids if gid < 0 or gid >= device_count]
+    if invalid:
+        raise ValueError(
+            f"Invalid GPU ids {invalid}. Visible CUDA devices: 0..{device_count - 1}."
+        )
+    return gpu_ids
+
+
+def resolve_device(gpus: Optional[Union[str, int, List[int], tuple]] = None) -> tuple[torch.device, List[int]]:
+    """Return the primary torch.device and selected GPU ids."""
+    gpu_ids = parse_gpu_ids(gpus)
+    if not gpu_ids:
+        return torch.device("cpu"), []
+    return torch.device(f"cuda:{gpu_ids[0]}"), gpu_ids
+
+
+def prepare_model_for_devices(model: torch.nn.Module, gpus: Optional[Union[str, int, List[int], tuple]] = None):
+    """Move a model to the selected device(s) and wrap with DataParallel if needed."""
+    device, gpu_ids = resolve_device(gpus)
+    model = model.to(device)
+    if len(gpu_ids) > 1:
+        model = torch.nn.DataParallel(model, device_ids=gpu_ids, output_device=gpu_ids[0])
+    return model, device, gpu_ids
+
 class LpLoss(object):
     def __init__(self, d=2, p=2, size_average=True, reduction=True):
         super(LpLoss, self).__init__()

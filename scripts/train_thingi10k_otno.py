@@ -261,6 +261,14 @@ def main():
             wandb_run.log(metrics, step=ep + 1)
 
     out_dir = config.get("output", {}).get("dir", "results")
+
+    chk_dir = os.path.join(out_dir, "checkpoints")
+    os.makedirs(chk_dir, exist_ok=True)
+    chk_path = os.path.join(chk_dir, "otno_thingi10k.pt")
+    model_state = model.module.state_dict() if hasattr(model, 'module') else model.state_dict()
+    torch.save(model_state, chk_path)
+    print(f"[*] Saved Thingi10K OTNO weights to: {chk_path}")
+
     prefix = os.path.join(out_dir, "thingi10k_otno")
     save_loss_plots(train_losses, test_losses, test_topo_history, prefix)
     print(f"[*] Saved Thingi10K OTNO loss plots: {prefix}_overall.png and {prefix}_per_topology.png")
