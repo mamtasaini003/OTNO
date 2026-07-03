@@ -1,1 +1,9 @@
-results/*.pt
+__pycache__/
+*.pyc
+*.egg-info/
+.benchmarks/
+wandb/
+results/checkpoints/
+results.txt
+full_paper/
+.codex

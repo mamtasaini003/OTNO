@@ -147,7 +147,7 @@ def evaluate_topos_mixed(config, device):
         n_train=config["dataset"]["train_samples"],
         n_test=config["dataset"]["test_samples"],
         split="test",
-        expand_factor=config["dataset"]["expand_factor"],
+        expand_factor=config["dataset"].get("expand_factor", 2.0),
         num_points=config["dataset"].get("num_points", 3586),
         base_seed=config["training"].get("seed", 42),
     )
@@ -175,7 +175,11 @@ def evaluate_topos_mixed(config, device):
     model = TOPOS(spherical_config=shared, toroidal_config=shared.copy(), volumetric_config=vol, graph_config=graph_cfg)
     chk_path = os.path.join(config.get("output", {}).get("dir", "results"), "checkpoints", "topos_mixed_genus.pt")
     if os.path.exists(chk_path):
-        model.load_state_dict(torch.load(chk_path, map_location="cpu", weights_only=False), strict=False)
+        try:
+            model.load_state_dict(torch.load(chk_path, map_location="cpu", weights_only=False), strict=False)
+            print(f"    [✓] Loaded checkpoint: {chk_path}")
+        except RuntimeError as e:
+            print(f"    [!] Checkpoint architecture mismatch ({chk_path}), using random weights. Error: {e}")
     model = model.to(device).eval()
 
     # Quick normalizer
@@ -260,7 +264,7 @@ def evaluate_otno_mixed(config, device):
         n_train=config["dataset"]["train_samples"],
         n_test=config["dataset"]["test_samples"],
         split="test",
-        expand_factor=config["dataset"]["expand_factor"],
+        expand_factor=config["dataset"].get("expand_factor", 2.0),
         num_points=config["dataset"].get("num_points", 3586),
         base_seed=config["training"].get("seed", 42),
     )
@@ -282,7 +286,11 @@ def evaluate_otno_mixed(config, device):
     )
     chk_path = os.path.join(config.get("output", {}).get("dir", "results"), "checkpoints", "otno_mixed_genus.pt")
     if os.path.exists(chk_path):
-        model.load_state_dict(torch.load(chk_path, map_location="cpu", weights_only=False), strict=False)
+        try:
+            model.load_state_dict(torch.load(chk_path, map_location="cpu", weights_only=False), strict=False)
+            print(f"    [✓] Loaded checkpoint: {chk_path}")
+        except RuntimeError as e:
+            print(f"    [!] Checkpoint architecture mismatch ({chk_path}), using random weights. Error: {e}")
     model = model.to(device).eval()
 
     # Normalizers
@@ -361,7 +369,7 @@ def evaluate_gino_mixed(config, device):
         n_train=config["dataset"]["train_samples"],
         n_test=config["dataset"]["test_samples"],
         split="test",
-        expand_factor=config["dataset"]["expand_factor"],
+        expand_factor=config["dataset"].get("expand_factor", 2.0),
         num_points=config["dataset"].get("num_points", 3586),
         base_seed=config["training"].get("seed", 42),
         latent_grid_size=latent_grid_size,
@@ -402,7 +410,11 @@ def evaluate_gino_mixed(config, device):
     )
     chk_path = os.path.join(config.get("output", {}).get("dir", "results"), "checkpoints", "gino_mixed_genus.pt")
     if os.path.exists(chk_path):
-        model.load_state_dict(torch.load(chk_path, map_location="cpu", weights_only=False), strict=False)
+        try:
+            model.load_state_dict(torch.load(chk_path, map_location="cpu", weights_only=False), strict=False)
+            print(f"    [✓] Loaded checkpoint: {chk_path}")
+        except RuntimeError as e:
+            print(f"    [!] Checkpoint architecture mismatch ({chk_path}), using random weights. Error: {e}")
     model = model.to(device).eval()
 
     # Normalizers
@@ -515,9 +527,13 @@ def evaluate_topos_thingi(config, device):
     graph_cfg = {"in_channels": mc.get("in_channels", 9), "out_channels": mc.get("out_channels", 1), "hidden_channels": mc["hidden_channels"] // 3}
 
     model = TOPOS(spherical_config=shared, toroidal_config=shared.copy(), volumetric_config=vol, graph_config=graph_cfg)
-    chk_path = os.path.join(config.get("output", {}).get("dir", "results"), "checkpoints", "topos_mixed_genus.pt")
+    chk_path = os.path.join(config.get("output", {}).get("dir", "results"), "checkpoints", "topos_thingi10k.pt")
     if os.path.exists(chk_path):
-        model.load_state_dict(torch.load(chk_path, map_location="cpu", weights_only=False), strict=False)
+        try:
+            model.load_state_dict(torch.load(chk_path, map_location="cpu", weights_only=False), strict=False)
+            print(f"    [✓] Loaded checkpoint: {chk_path}")
+        except RuntimeError as e:
+            print(f"    [!] Checkpoint architecture mismatch ({chk_path}), using random weights. Error: {e}")
     model = model.to(device).eval()
 
     # Quick normalizers
@@ -647,9 +663,13 @@ def evaluate_otno_thingi(config, device):
         factorization=mc.get("factorization", "tucker"),
         rank=mc.get("rank", 1.0),
     )
-    chk_path = os.path.join(config.get("output", {}).get("dir", "results"), "checkpoints", "otno_mixed_genus.pt")
+    chk_path = os.path.join(config.get("output", {}).get("dir", "results"), "checkpoints", "otno_thingi10k.pt")
     if os.path.exists(chk_path):
-        model.load_state_dict(torch.load(chk_path, map_location="cpu", weights_only=False), strict=False)
+        try:
+            model.load_state_dict(torch.load(chk_path, map_location="cpu", weights_only=False), strict=False)
+            print(f"    [✓] Loaded checkpoint: {chk_path}")
+        except RuntimeError as e:
+            print(f"    [!] Checkpoint architecture mismatch ({chk_path}), using random weights. Error: {e}")
     model = model.to(device).eval()
 
     # Normalizers from training split
