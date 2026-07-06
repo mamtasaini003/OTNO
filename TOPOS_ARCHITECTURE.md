@@ -24,42 +24,42 @@
 ## 2. The 4-Stage Pipeline
 
 ```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                           TOPOS Pipeline                                     │
-└─────────────────────────────────────────────────────────────────────────────┘
++-----------------------------------------------------------------------------+
+|                           TOPOS Pipeline                                     |
++-----------------------------------------------------------------------------+
 
   Stage 1          Stage 2              Stage 3              Stage 4
-┌──────────┐   ┌──────────┐        ┌──────────┐         ┌──────────┐
-│   OT     │──▶│  Router  │───────▶│  Solver  │────────▶│ Decoder  │
-│ Encoder  │   │          │        │  (FNO)   │         │          │
-└──────────┘   └──────────┘        └──────────┘         └──────────┘
-    │              │                   │                    │
-    │              │                   │                    │
-    │         ┌────┴────┐         ┌────┴────┐              │
-    │         │         │         │         │              │
-    │         ▼         ▼         ▼         ▼              │
-    │    spherical  toroidal  volumetric    │              │
-    │                                            │          │
-    │         (pre-computed)   (neural network) │          │
-    │                                            │          │
-    └────────────────────────────────────────────┘
++----------+   +----------+        +----------+         +----------+
+|   OT     |-->|  Router  |------->|  Solver  |-------->| Decoder  |
+| Encoder  |   |          |        |  (FNO)   |         |          |
++----------+   +----------+        +----------+         +----------+
+    |              |                   |                    |
+    |              |                   |                    |
+    |         +----+----+         +----+----+              |
+    |         |         |         |         |              |
+    |         v         v         v         v              |
+    |    spherical  toroidal  volumetric    |              |
+    |                                            |          |
+    |         (pre-computed)   (neural network) |          |
+    |                                            |          |
+    +--------------------------------------------+
                     Inverse OT (index lookup)
 ```
 
 ### Stage 1: OT Encoder (Pre-computed)
 - **Location**: Data pipeline (not in model)
-- **Purpose**: Maps irregular mesh → structured latent grid via Optimal Transport
+- **Purpose**: Maps irregular mesh -> structured latent grid via Optimal Transport
 - **Input**: Raw mesh geometry with features (position, normals, etc.)
 - **Output**: `transports` tensor on latent grid + `indices_decoder` for inverse mapping
 
 ### Stage 2: Router (TopologicalRouter)
 - **Location**: `router/topology_check.py`
 - **Logic**: Uses **Euler characteristic** to determine topology
-  - χ = V − E + F (vertices - edges + faces)
-  - χ ≈ 2 → **spherical** (genus 0, closed surface like sphere)
-  - χ ≈ 0 → **toroidal** (genus 1, torus-like)
-  - else → **volumetric** (higher genus or volumetric domain)
-- **Formula**: `genus = (2 - χ) / 2`
+  - chi = V - E + F (vertices - edges + faces)
+  - chi ~= 2 -> **spherical** (genus 0, closed surface like sphere)
+  - chi ~= 0 -> **toroidal** (genus 1, torus-like)
+  - else -> **volumetric** (higher genus or volumetric domain)
+- **Formula**: `genus = (2 - chi) / 2`
 
 ### Stage 3: Solver (FNO)
 Three branches based on topology:
@@ -68,13 +68,13 @@ Three branches based on topology:
 |--------|-------|-------------|----------|
 | spherical | `SphericalTransportFNO` | spherical grid (SFNO) | Genus 0 surfaces |
 | toroidal | `ToroidalTransportFNO` | 2D periodic (torus grid) | Genus 1 surfaces |
-| volumetric | `VolumetricFNO` | 3D Cartesian [0,1]³ | Higher genus / volumes |
+| volumetric | `VolumetricFNO` | 3D Cartesian [0,1]3 | Higher genus / volumes |
 
 All solvers extend `neuralop.FNO` with:
 - **Spectral convolution** via FFT (Fourier Neural Operator)
 - **Lifting**: project input channels to hidden dimension
 - **FNO blocks**: stack of spectral convolutions
-- **Projection**: map hidden → output channels
+- **Projection**: map hidden -> output channels
 
 ### Stage 4: Decoder (Integrated in solvers)
 - **Method**: Index lookup via `idx_decoder`
@@ -89,24 +89,24 @@ All solvers extend `neuralop.FNO` with:
 
 ```
 /home/mamta/work/OTNO/
-├── models/
-│   ├── __init__.py          # Exports TOPOS
-│   ├── topos.py             # Main TOPOS class (4-stage orchestrator)
-│   ├── fno_spherical.py     # SphericalTransportFNO & ToroidalTransportFNO
-│   └── fno_3d_regular.py   # VolumetricFNO (3D Cartesian)
-│
-├── router/
-│   ├── __init__.py
-│   └── topology_check.py    # TopologicalRouter, compute_euler_characteristic
-│
-├── topos_train.py           # Training script for TOPOS
-│
-├── utils.py                 # Utilities (LpLoss, UnitGaussianNormalizer, etc.)
-│
-├── tests/
-│   └── test_topos_pipeline.py
-│
-└── topos.txt                # Paper documentation
++-- models/
+|   +-- __init__.py          # Exports TOPOS
+|   +-- topos.py             # Main TOPOS class (4-stage orchestrator)
+|   +-- fno_spherical.py     # SphericalTransportFNO & ToroidalTransportFNO
+|   +-- fno_3d_regular.py   # VolumetricFNO (3D Cartesian)
+|
++-- router/
+|   +-- __init__.py
+|   +-- topology_check.py    # TopologicalRouter, compute_euler_characteristic
+|
++-- topos_train.py           # Training script for TOPOS
+|
++-- utils.py                 # Utilities (LpLoss, UnitGaussianNormalizer, etc.)
+|
++-- tests/
+|   +-- test_topos_pipeline.py
+|
++-- topos.txt                # Paper documentation
 ```
 
 ---
@@ -115,31 +115,31 @@ All solvers extend `neuralop.FNO` with:
 
 ```
 Input:  (transports, idx_decoder, topology, chi)
-        │
-        ▼
-┌───────────────────────────────────────────────────────┐
-│  Stage 2: Route (if topology="auto")                  │
-│  - Compute χ = V - E + F                               │
-│  - Determine genus → select solver                    │
-└───────────────────────────────────────────────────────┘
-        │
-        ▼
-┌───────────────────────────────────────────────────────┐
-│  Stage 3: Solve in Latent Space                       │
-│  - lifting: (C, H, W) → (hidden, H, W)               │
-│  - FNO blocks: spectral convolutions                  │
-│  - domain_padding/unpad                              │
-└───────────────────────────────────────────────────────┘
-        │
-        ▼
-┌───────────────────────────────────────────────────────┐
-│  Stage 4: Decode (inverse OT)                         │
-│  - Reshape: grid → point cloud                         │
-│  - Index lookup: transports[idx_decoder]              │
-│  - Projection MLP: hidden → out_channels              │
-└───────────────────────────────────────────────────────┘
-        │
-        ▼
+        |
+        v
++-------------------------------------------------------+
+|  Stage 2: Route (if topology="auto")                  |
+|  - Compute chi = V - E + F                               |
+|  - Determine genus -> select solver                    |
++-------------------------------------------------------+
+        |
+        v
++-------------------------------------------------------+
+|  Stage 3: Solve in Latent Space                       |
+|  - lifting: (C, H, W) -> (hidden, H, W)               |
+|  - FNO blocks: spectral convolutions                  |
+|  - domain_padding/unpad                              |
++-------------------------------------------------------+
+        |
+        v
++-------------------------------------------------------+
+|  Stage 4: Decode (inverse OT)                         |
+|  - Reshape: grid -> point cloud                         |
+|  - Index lookup: transports[idx_decoder]              |
+|  - Projection MLP: hidden -> out_channels              |
++-------------------------------------------------------+
+        |
+        v
 Output: Predicted field on physical mesh
 ```
 
@@ -149,14 +149,14 @@ Output: Predicted field on physical mesh
 
 ```
 nn.Module
-├── TOPOS (models/topos.py)
-│   ├── TopologicalRouter (router/topology_check.py)
-│   ├── SphericalTransportFNO (models/fno_spherical.py)
-│   │   └── neuralop.models.SFNO
-│   ├── ToroidalTransportFNO (models/fno_spherical.py)
-│   │   └── neuralop.models.FNO
-│   └── VolumetricFNO (models/fno_3d_regular.py)
-│       └── neuralop.models.FNO
++-- TOPOS (models/topos.py)
+|   +-- TopologicalRouter (router/topology_check.py)
+|   +-- SphericalTransportFNO (models/fno_spherical.py)
+|   |   +-- neuralop.models.SFNO
+|   +-- ToroidalTransportFNO (models/fno_spherical.py)
+|   |   +-- neuralop.models.FNO
+|   +-- VolumetricFNO (models/fno_3d_regular.py)
+|       +-- neuralop.models.FNO
 ```
 
 ---

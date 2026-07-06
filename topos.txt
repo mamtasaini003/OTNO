@@ -5,7 +5,7 @@ Here is the high-level summary of the whole idea:
 1. The Core Philosophy: "Standardizing Reality"
 The fundamental problem in geometric deep learning is that irregular shapes (like cars, pipes, or brackets) have inconsistent coordinate systems. TOPOS solves this by using Optimal Transport (OT) to "normalize" any irregular geometry into a standard, uniform Latent Workbench (like a sphere or a grid).
 
-By solving physics on a standardized workbench rather than the complex raw shape, the model achieves universal generalization—the ability to apply learned physical laws to shapes it has never seen before.
+By solving physics on a standardized workbench rather than the complex raw shape, the model achieves universal generalization-the ability to apply learned physical laws to shapes it has never seen before.
 
 2. The Four-Stage Technical Pipeline
 Stage 1: The Encoder (OT Mapping)
@@ -315,7 +315,7 @@ $f$ & Input field or source term (e.g., forcing, coefficients, boundary/initial 
 $u$ & Ground-truth PDE solution field corresponding to $f$ \\
 $\tilde{u}$ & Predicted solution field in latent domain (pulled back to physical space via $T$) \\
 
-$\mathcal{N}$ & Differential operator defining the governing PDE (e.g., Navier–Stokes, diffusion) \\
+$\mathcal{N}$ & Differential operator defining the governing PDE (e.g., Navier-Stokes, diffusion) \\
 $\mathcal{G}_\theta$ & Neural operator mapping input field $f$ to solution field $u$ \\
 $\mathcal{L}$ & Total training loss (data misfit plus optional physics-informed term) \\
 $\mathcal{L}_\text{PDE}$ & Physics-informed loss enforcing PDE residual consistency \\

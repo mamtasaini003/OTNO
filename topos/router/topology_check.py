@@ -4,12 +4,12 @@ Topological Router for TOPOS Architecture.
 Computes the Euler characteristic of a mesh and routes it to the
 appropriate latent workbench (spherical, toroidal, or volumetric).
 
-Euler Characteristic: χ = V − E + F = 2 − 2g
-  - g = 0  (χ = 2)  →  Spherical workbench (2D Latitude/Longitude or HEALPix)
-  - g = 1  (χ = 0)  →  Toroidal workbench  (2D Periodic)
-  - open   (χ = 1)  →  Volumetric / Padded (3D Cartesian or 2D Padded)
-  - graph  (χ fails)→  Graph Neural Operator Fallback (Non-manifold / Intersecting grids)
-  - else            →  Volumetric workbench (3D Cartesian)
+Euler Characteristic: chi = V - E + F = 2 - 2g
+  - g = 0  (chi = 2)  ->  Spherical workbench (2D Latitude/Longitude or HEALPix)
+  - g = 1  (chi = 0)  ->  Toroidal workbench  (2D Periodic)
+  - open   (chi = 1)  ->  Volumetric / Padded (3D Cartesian or 2D Padded)
+  - graph  (chi fails)->  Graph Neural Operator Fallback (Non-manifold / Intersecting grids)
+  - else            ->  Volumetric workbench (3D Cartesian)
 """
 
 import numpy as np
@@ -22,7 +22,7 @@ except ImportError:
 
 
 def compute_euler_characteristic(mesh=None, V=None, E=None, F=None):
-    """Compute the Euler characteristic χ = V − E + F.
+    """Compute the Euler characteristic chi = V - E + F.
 
     Parameters
     ----------
@@ -39,7 +39,7 @@ def compute_euler_characteristic(mesh=None, V=None, E=None, F=None):
     Returns
     -------
     int
-        The Euler characteristic χ.
+        The Euler characteristic chi.
     """
     if mesh is not None:
         if not HAS_TRIMESH:
@@ -71,7 +71,7 @@ def compute_genus(chi):
     Returns
     -------
     float
-        Genus g = (2 − χ) / 2.
+        Genus g = (2 - chi) / 2.
     """
     return (2 - chi) / 2.0
 
@@ -81,11 +81,11 @@ class TopologicalRouter:
 
     The router determines the genus of the input geometry via its Euler
     characteristic and selects the appropriate FNO branch:
-      - genus 0  (χ ≈ 2)  → "spherical"  (Lat/Lon or HEALPix 2D)
-      - genus 1  (χ ≈ 0)  → "toroidal"   (2D Periodic)
-      - open     (χ ≈ 1)  → "volumetric" (Route to Volumetric or padded Toroidal)
-      - non-manifold      → "graph"      (Fallback to GNO message-passing)
-      - otherwise         → "volumetric" (3D Cartesian)
+      - genus 0  (chi ~= 2)  -> "spherical"  (Lat/Lon or HEALPix 2D)
+      - genus 1  (chi ~= 0)  -> "toroidal"   (2D Periodic)
+      - open     (chi ~= 1)  -> "volumetric" (Route to Volumetric or padded Toroidal)
+      - non-manifold      -> "graph"      (Fallback to GNO message-passing)
+      - otherwise         -> "volumetric" (3D Cartesian)
 
     Parameters
     ----------

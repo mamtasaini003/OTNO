@@ -8,17 +8,17 @@ from typing import Dict, List, Optional, Tuple
 from torch.utils.data import Dataset, DataLoader, ConcatDataset
 
 
-# ─── Benchmark Metadata ────────────────────────────────────────────────────────
+# --- Benchmark Metadata --------------------------------------------------------
 # This registry contains both external PDE benchmarks and custom TOPOS benchmarks.
 
 BENCHMARK_METADATA = {
-    # ── External Elliptic/Flow Benchmarks ──
+    # -- External Elliptic/Flow Benchmarks --
     # Elliptic PDEs (Poisson-like) - fixed coordinates
     'Poisson-Gauss': {
         'file': 'Poisson-Gauss.nc',
         'fix_x': True,
         'domain_label': 'square',
-        'topology': 'spherical',    # simply-connected planar → genus-0
+        'topology': 'spherical',    # simply-connected planar -> genus-0
         'euler_chi': 2,
         'description': 'Poisson equation with Gaussian forcing on unit square',
     },
@@ -35,7 +35,7 @@ BENCHMARK_METADATA = {
         'file': 'Circle.nc',
         'fix_x': False,
         'domain_label': 'circle',
-        'topology': 'toroidal',     # annular domain around body → genus-1-like
+        'topology': 'toroidal',     # annular domain around body -> genus-1-like
         'euler_chi': 0,
         'description': 'Steady compressible flow around circular body',
     },
@@ -87,7 +87,7 @@ BENCHMARK_METADATA = {
         'euler_chi': 0,
         'description': 'Steady compressible flow around rectangular body',
     },
-    # ── Tier-2 Resolution Invariance Datasets ──
+    # -- Tier-2 Resolution Invariance Datasets --
     'Heat-L-coarse': {
         'file': 'Heat-L-coarse.nc',
         'fix_x': True,
@@ -112,7 +112,7 @@ BENCHMARK_METADATA = {
         'euler_chi': 1,
         'description': 'Heat equation on L-shaped domain (Fine: 16384 points)',
     },
-    # ── Custom: TOPOS Benchmarks (Resolution Invariance, etc.) ──
+    # -- Custom: TOPOS Benchmarks (Resolution Invariance, etc.) --
     'Heat-L-coarse': {
         'file': 'topos_benchmarks/heat_l_shape/Heat-L-coarse.nc',
         'fix_x': True,
@@ -149,7 +149,7 @@ BENCHMARK_METADATA = {
         'topology': 'toroidal',
         'euler_chi': 0,
     },
-    # ── Tier-3 Physical Fidelity (Unsteady Navier-Stokes) ──
+    # -- Tier-3 Physical Fidelity (Unsteady Navier-Stokes) --
     'NS-Sines': {
         'file': 'topos_benchmarks/unsteady_ns/time_dep/NS-Sines.nc',
         'fix_x': True,
@@ -162,7 +162,7 @@ BENCHMARK_METADATA = {
 }
 
 
-# ─── Dataset Class ────────────────────────────────────────────────────────────
+# --- Dataset Class ------------------------------------------------------------
 
 class PDEDataset(Dataset):
     """
@@ -254,12 +254,12 @@ class PDEDataset(Dataset):
 
         # Handle coordinates
         if self.meta_info['fix_x']:
-            # x: (1, 1, P, 2) → (P, 2) — same coords for all samples
+            # x: (1, 1, P, 2) -> (P, 2) - same coords for all samples
             x_raw = x_raw.squeeze()
             if x_raw.ndim == 1:
                 x_raw = x_raw.reshape(-1, 2)
         else:
-            # x: (N, 1, P, 2) → (N, P, 2)
+            # x: (N, 1, P, 2) -> (N, P, 2)
             x_raw = x_raw.squeeze(1)
 
         N = c_raw.shape[0]
@@ -357,7 +357,7 @@ class PDEDataset(Dataset):
         u = self.u[idx]           # (T, P, U_ch) or (P, U_ch)
 
         if self._fix_x:
-            x = self.x             # (P, 2) — shared
+            x = self.x             # (P, 2) - shared
         else:
             x = self.x[idx]       # (P, 2)
 
@@ -376,7 +376,7 @@ class PDEDataset(Dataset):
         return batch
 
 
-# ─── Mixed-topology dataset ──────────────────────────────────────────────────
+# --- Mixed-topology dataset --------------------------------------------------
 
 class MixedTopologyDataset(Dataset):
     """
@@ -385,8 +385,8 @@ class MixedTopologyDataset(Dataset):
     samples from different topologies to the appropriate FNO branch.
 
     Topology mapping (for TOPOS router):
-        - Poisson-Gauss / Poisson-C-Sines → spherical (genus-0, chi=2)
-        - Circle / Ellipse / Cone / etc.  → toroidal  (genus-1, chi=0)
+        - Poisson-Gauss / Poisson-C-Sines -> spherical (genus-0, chi=2)
+        - Circle / Ellipse / Cone / etc.  -> toroidal  (genus-1, chi=0)
     """
 
     def __init__(
@@ -442,7 +442,7 @@ class MixedTopologyDataset(Dataset):
         raise IndexError(f"Index {idx} out of range [0, {self._total_len})")
 
 
-# ─── Custom collate for mixed-topology batches ───────────────────────────────
+# --- Custom collate for mixed-topology batches -------------------------------
 
 def mixed_collate_fn(batch):
     """
@@ -463,7 +463,7 @@ def mixed_collate_fn(batch):
     }
 
 
-# ─── Convenience functions ────────────────────────────────────────────────────
+# --- Convenience functions ----------------------------------------------------
 
 def get_pde_dataloaders(
     dataset_name: str,

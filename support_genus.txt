@@ -3,14 +3,14 @@
 # Use this file to restrict training to specific geometries.
 # Specify EITHER 'mode: genus' OR 'mode: chi', then list the allowed values.
 #
-# ┌──────────┬────────┬──────────────────────────────┐
-# │  genus   │  chi   │  TOPOS branch                │
-# ├──────────┼────────┼──────────────────────────────┤
-# │    0     │    2   │  Spherical (SFNO)            │
-# │    1     │    0   │  Toroidal  (2D periodic FNO) │
-# │   0.5    │    1   │  Volumetric (open surfaces)  │
-# │   >1     │   <0   │  Volumetric (higher genus)   │
-# └──────────┴────────┴──────────────────────────────┘
+# +----------+--------+------------------------------+
+# |  genus   |  chi   |  TOPOS branch                |
+# +----------+--------+------------------------------+
+# |    0     |    2   |  Spherical (SFNO)            |
+# |    1     |    0   |  Toroidal  (2D periodic FNO) |
+# |   0.5    |    1   |  Volumetric (open surfaces)  |
+# |   >1     |   <0   |  Volumetric (higher genus)   |
+# +----------+--------+------------------------------+
 #
 # mode: genus | chi
 # values: comma-separated numbers

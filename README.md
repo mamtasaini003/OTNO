@@ -1,5 +1,5 @@
 # TOPOS: Topological Optimal-transport Partitioned Operator Solver
-In this repository, we introduce the **TOPOS** architecture—a unified neural operator framework for learning physics on complex geometric domains. Conventional deep learning requires regular grids or falls back to localized graph methods on unstructured meshes. TOPOS circumvents this by using instance-dependent Optimal Transport (OT) to smoothly deform input geometries into standardized spherical, toroidal, or flat workbenches. 
+In this repository, we introduce the **TOPOS** architecture, a unified neural operator framework for learning physics on complex geometric domains. Conventional deep learning requires regular grids or falls back to localized graph methods on unstructured meshes. TOPOS circumvents this by using instance-dependent Optimal Transport (OT) to smoothly deform input geometries into standardized spherical, toroidal, or flat workbenches. 
 
 A topological router ensures the mapping prevents "pinching" or "tearing" by aligning topologies based on their Euler characteristic. Once standard mapped, the framework unleashes powerful spectral Fourier Neural Operators (FNO) optimized on regular structures, delivering state-of-the-art speeds in 3D CFD tasks like Navier-Stokes, ShapeNet-Car CFD predictions, and DrivAerNet aerodynamic benchmarks.
 

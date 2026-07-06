@@ -63,7 +63,7 @@ def parse_geometry_filter(filepath):
 
 # Backward-compatible alias
 def parse_supported_topologies(filepath):
-    """Legacy wrapper — calls :func:`parse_geometry_filter`."""
+    """Legacy wrapper - calls :func:`parse_geometry_filter`."""
     return parse_geometry_filter(filepath)
 
 

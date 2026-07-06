@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 """
-Plot 4 — Robustness Violin / Box‑Whisker Plots  (Thingi10K Dataset)
+Plot 4 - Robustness Violin / Box-Whisker Plots  (Thingi10K Dataset)
 
-Shows the *distribution* of per‑sample Relative L² errors across the
+Shows the *distribution* of per-sample Relative L2 errors across the
 full Thingi10K test set for GINO, OTNO, and TOPOS.
 
-Fat tails ↔ catastrophic failures on certain geometries.
+Fat tails <-> catastrophic failures on certain geometries.
 TOPOS should produce a tight, compact distribution near the bottom.
 
 Usage:
@@ -63,7 +63,7 @@ def main():
         print(f"[!] No evaluation data for {args.dataset}. Run scripts/evaluate_all.py first.")
         return
 
-    # ── Violin + overlaid box ────────────────────────────────────────
+    # -- Violin + overlaid box ----------------------------------------
     fig, ax = plt.subplots(figsize=(4.5, 3.5))
 
     data_list = [all_errors[m] for m in MODELS if m in all_errors]

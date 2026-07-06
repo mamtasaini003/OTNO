@@ -62,7 +62,7 @@ def main():
         chi = 0 # Default fallback for messy CAD files
     
     topology = router.route(chi=chi)
-    print(f"    -> Euler Characteristic (χ): {chi}")
+    print(f"    -> Euler Characteristic (chi): {chi}")
     print(f"    -> Extracted Latent Domain : {topology.upper()}")
     
     # 3. Spectral Dimensionality Reduction (Optimal Transport Map)

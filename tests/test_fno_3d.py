@@ -1,5 +1,5 @@
 """
-Tests for models/fno_3d_regular.py — VolumetricFNO and grid helpers.
+Tests for models/fno_3d_regular.py - VolumetricFNO and grid helpers.
 """
 
 import sys
@@ -47,7 +47,7 @@ class TestVolumetricFNO:
         assert model is not None
 
     def test_forward_shape(self, model):
-        """Forward pass with synthetic 3D input → verify output shape."""
+        """Forward pass with synthetic 3D input -> verify output shape."""
         Nx, Ny, Nz = 8, 8, 8
         n_target = 100
         x = torch.randn(1, 3, Nx, Ny, Nz)

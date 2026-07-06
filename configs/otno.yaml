@@ -1,4 +1,4 @@
-# OTNO Baseline Configuration (Toroidal FNO — per paper ablation Table 6)
+# OTNO Baseline Configuration (Toroidal FNO - per paper ablation Table 6)
 # References: ot_train.py from experiments/shapenet/topos/
 
 model:
@@ -32,6 +32,6 @@ dataset:
   ot_data_path: "/media/HDD/mamta_backup/datasets/otno/car-pressure-data/torus_OTmean_geomloss_expand2.0.pt"
   train_samples: 500
   test_samples: 111
-  resolution: 84             # Latent grid: 84×84 = 7056 (expand_factor=2.0, n_t=3586)
+  resolution: 84             # Latent grid: 84x84 = 7056 (expand_factor=2.0, n_t=3586)
   expand_factor: 2.0
   cache_dir: "/media/HDD/mamta_backup/datasets/otno/car-pressure-data/dynamic_cache/otno"

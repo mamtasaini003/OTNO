@@ -50,7 +50,7 @@ except Exception:
     HAS_THINGI = False
 
 
-# ── helpers ──────────────────────────────────────────────────────────
+# -- helpers ----------------------------------------------------------
 
 def _load_config(path):
     with open(path) as f:
@@ -105,7 +105,7 @@ def _build_transports_otno(batch, device):
 
 
 def _compute_boundary_mask(points, topology, chi, threshold=0.15):
-    """Heuristic boundary mask — vertices near topological features.
+    """Heuristic boundary mask - vertices near topological features.
 
     For genus-0 shapes, boundary is defined as points near the
     equatorial belt.  For higher genus or open shapes, we use the
@@ -120,7 +120,7 @@ def _compute_boundary_mask(points, topology, chi, threshold=0.15):
         dist_to_ring = torch.abs(torch.sqrt(x * x + y * y) - R_major)
         mask = dist_to_ring < threshold * 2
     elif topology in ("open_surface",):
-        # Boundary is literally edges — approximate as extreme z
+        # Boundary is literally edges - approximate as extreme z
         z_range = z.max() - z.min()
         mask = (z > z.max() - threshold * z_range) | (z < z.min() + threshold * z_range)
     elif topology in ("high_genus",):
@@ -128,13 +128,13 @@ def _compute_boundary_mask(points, topology, chi, threshold=0.15):
         curvature_proxy = torch.abs(x * y) + torch.abs(y * z)
         mask = curvature_proxy > curvature_proxy.quantile(0.75)
     else:
-        # Spherical — polar caps
+        # Spherical - polar caps
         mask = torch.abs(z) > (z.max() - threshold * (z.max() - z.min()))
 
     return mask
 
 
-# ── Per-model evaluators ─────────────────────────────────────────────
+# -- Per-model evaluators ---------------------------------------------
 
 def evaluate_topos_mixed(config, device):
     """Evaluate TOPOS on the mixed-genus synthetic dataset."""
@@ -177,7 +177,7 @@ def evaluate_topos_mixed(config, device):
     if os.path.exists(chk_path):
         try:
             model.load_state_dict(torch.load(chk_path, map_location="cpu", weights_only=False), strict=False)
-            print(f"    [✓] Loaded checkpoint: {chk_path}")
+            print(f"    [OK] Loaded checkpoint: {chk_path}")
         except RuntimeError as e:
             print(f"    [!] Checkpoint architecture mismatch ({chk_path}), using random weights. Error: {e}")
     model = model.to(device).eval()
@@ -288,7 +288,7 @@ def evaluate_otno_mixed(config, device):
     if os.path.exists(chk_path):
         try:
             model.load_state_dict(torch.load(chk_path, map_location="cpu", weights_only=False), strict=False)
-            print(f"    [✓] Loaded checkpoint: {chk_path}")
+            print(f"    [OK] Loaded checkpoint: {chk_path}")
         except RuntimeError as e:
             print(f"    [!] Checkpoint architecture mismatch ({chk_path}), using random weights. Error: {e}")
     model = model.to(device).eval()
@@ -412,7 +412,7 @@ def evaluate_gino_mixed(config, device):
     if os.path.exists(chk_path):
         try:
             model.load_state_dict(torch.load(chk_path, map_location="cpu", weights_only=False), strict=False)
-            print(f"    [✓] Loaded checkpoint: {chk_path}")
+            print(f"    [OK] Loaded checkpoint: {chk_path}")
         except RuntimeError as e:
             print(f"    [!] Checkpoint architecture mismatch ({chk_path}), using random weights. Error: {e}")
     model = model.to(device).eval()
@@ -478,7 +478,7 @@ def evaluate_gino_mixed(config, device):
     }
 
 
-# ── Thingi10K evaluators ─────────────────────────────────────────────
+# -- Thingi10K evaluators ---------------------------------------------
 
 def evaluate_topos_thingi(config, device):
     """Evaluate TOPOS on Thingi10K."""
@@ -531,7 +531,7 @@ def evaluate_topos_thingi(config, device):
     if os.path.exists(chk_path):
         try:
             model.load_state_dict(torch.load(chk_path, map_location="cpu", weights_only=False), strict=False)
-            print(f"    [✓] Loaded checkpoint: {chk_path}")
+            print(f"    [OK] Loaded checkpoint: {chk_path}")
         except RuntimeError as e:
             print(f"    [!] Checkpoint architecture mismatch ({chk_path}), using random weights. Error: {e}")
     model = model.to(device).eval()
@@ -667,7 +667,7 @@ def evaluate_otno_thingi(config, device):
     if os.path.exists(chk_path):
         try:
             model.load_state_dict(torch.load(chk_path, map_location="cpu", weights_only=False), strict=False)
-            print(f"    [✓] Loaded checkpoint: {chk_path}")
+            print(f"    [OK] Loaded checkpoint: {chk_path}")
         except RuntimeError as e:
             print(f"    [!] Checkpoint architecture mismatch ({chk_path}), using random weights. Error: {e}")
     model = model.to(device).eval()
@@ -745,7 +745,7 @@ def evaluate_otno_thingi(config, device):
     }
 
 
-# ── main ─────────────────────────────────────────────────────────────
+# -- main -------------------------------------------------------------
 
 EVALUATORS = {
     ("topos", "mixed_genus"):  evaluate_topos_mixed,
@@ -785,7 +785,7 @@ def main():
             torch.save(result, out_path)
             n = len(result["per_sample"])
             avg_l2 = np.mean([s["rel_l2"] for s in result["per_sample"]])
-            print(f"  ✓ Saved {out_path} ({n} samples, mean rel L²={avg_l2:.4f})")
+            print(f"  OK Saved {out_path} ({n} samples, mean rel L2={avg_l2:.4f})")
             print(f"    Timing: {result['timing']['inference_time_s']:.2f}s | "
                   f"Peak GPU: {result['timing']['peak_gpu_mb']:.0f} MB | "
                   f"Params: {result['timing']['n_params']:,}")

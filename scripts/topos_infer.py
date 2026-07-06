@@ -260,7 +260,7 @@ def infer_flowbench(args, device):
 if __name__ == '__main__':
     args = parse_args()
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    print(f"TOPOS Inference — dataset={args.dataset}, topology={args.topology}")
+    print(f"TOPOS Inference - dataset={args.dataset}, topology={args.topology}")
     
     if args.dataset == 'shapenet':
         infer_shapenet(args, device)

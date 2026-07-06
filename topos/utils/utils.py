@@ -298,7 +298,7 @@ class DictDatasetWithConstant(DictDataset):
 class PDEResidualLoss:
     """Physics-informed loss that evaluates PDE residuals.
 
-    Computes ||N[u_pred] - f||² where N is the PDE operator and f is the
+    Computes ||N[u_pred] - f||2 where N is the PDE operator and f is the
     source/forcing term. The PDE operator must be supplied as a callable.
 
     Parameters
@@ -334,7 +334,7 @@ class PDEResidualLoss:
 class CombinedLoss:
     """Combined data-fit + physics-informed loss for TOPOS.
 
-    L = ||u - G_θ(f)||² + λ · L_PDE
+    L = ||u - G_theta(f)||2 + lambda * L_PDE
 
     Parameters
     ----------

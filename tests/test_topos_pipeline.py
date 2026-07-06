@@ -1,5 +1,5 @@
 """
-Tests for models/topos.py — TOPOS pipeline integration tests.
+Tests for models/topos.py - TOPOS pipeline integration tests.
 """
 
 import sys
@@ -128,7 +128,7 @@ class TestTOPOSRouting:
         n_target = 30
         x = torch.randn(1, 4, Ns, Ns)
         idx = torch.randint(0, Ns * Ns, (n_target,))
-        # chi=2 → spherical branch (2D input)
+        # chi=2 -> spherical branch (2D input)
         out = model_full(x, idx, topology='auto', chi=2)
         assert out.numel() == n_target
 

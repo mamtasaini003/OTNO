@@ -1,5 +1,5 @@
 """
-TOPOS Training Script — Unified trainer for the TOPOS architecture.
+TOPOS Training Script - Unified trainer for the TOPOS architecture.
 
 Supports all three topology branches (spherical, toroidal, volumetric)
 and both supervised L2 and physics-informed losses.
@@ -155,7 +155,7 @@ def compute_torus_normals(n_s_sqrt, R=1.5, r=1.0):
 
 
 def square_grid(n):
-    """Create a square latent grid on [0,1]²."""
+    """Create a square latent grid on [0,1]2."""
     x = torch.linspace(0, 1, n)
     y = torch.linspace(0, 1, n)
     grid_x, grid_y = torch.meshgrid(x, y, indexing='ij')
@@ -209,7 +209,7 @@ def get_default_volumetric_config(in_channels=7, out_channels=3):
 # ============================================================
 
 def load_shapenet_data(args):
-    """Load ShapeNet dataset (torus OT data) — existing OTNO format."""
+    """Load ShapeNet dataset (torus OT data) - existing OTNO format."""
     expand_factor = 2.0
     n_t = 3586
     n_s_sqrt = int(np.sqrt(expand_factor) * np.ceil(np.sqrt(n_t)))
@@ -273,7 +273,7 @@ def load_shapenet_data(args):
 
 
 def load_flowbench_data(args):
-    """Load FlowBench dataset — existing OTNO format."""
+    """Load FlowBench dataset - existing OTNO format."""
     n_train, n_test = 800, 200
     resolution = args.resolution
     group_name = args.group_name
@@ -645,7 +645,7 @@ def parse_args():
 
 if __name__ == '__main__':
     args = parse_args()
-    print(f"TOPOS Training — dataset={args.dataset}, topology={args.topology}")
+    print(f"TOPOS Training - dataset={args.dataset}, topology={args.topology}")
 
     if args.dataset == 'shapenet':
         train_shapenet(args)

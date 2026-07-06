@@ -1,12 +1,12 @@
 #!/usr/bin/env python
 """
-Plot 5 — Pareto Efficiency Scatter Plot
+Plot 5 - Pareto Efficiency Scatter Plot
 
-X‑axis : Peak GPU Memory (MB)  [or Inference Time per shape (ms)]
-Y‑axis : Mean Relative L² Error
+X-axis : Peak GPU Memory (MB)  [or Inference Time per shape (ms)]
+Y-axis : Mean Relative L2 Error
 Dots   : One per model, labelled.
 
-TOPOS should sit in the bottom‑left corner (low error + low compute).
+TOPOS should sit in the bottom-left corner (low error + low compute).
 
 Usage:
     python plots/plot_pareto_efficiency.py [--eval_dir results/eval]
@@ -91,7 +91,7 @@ def main():
         print(f"[!] No data for {args.dataset}. Run scripts/evaluate_all.py first.")
         return
 
-    # ── Draw ─────────────────────────────────────────────────────────
+    # -- Draw ---------------------------------------------------------
     fig, ax = plt.subplots(figsize=(4.5, 3.5))
 
     for (x, y, m), n_params in zip(points, param_counts):
@@ -117,13 +117,13 @@ def main():
             fontsize=8, fontweight="bold", color=color,
         )
 
-    # Pareto frontier shading — highlight the ideal quadrant
+    # Pareto frontier shading - highlight the ideal quadrant
     x_vals = [p[0] for p in points]
     y_vals = [p[1] for p in points]
     ax.axhspan(0, min(y_vals) * 1.3, alpha=0.04, color="green", zorder=0)
     ax.axvspan(0, min(x_vals) * 1.3, alpha=0.04, color="green", zorder=0)
     ax.annotate(
-        "← Ideal", xy=(min(x_vals) * 0.85, min(y_vals) * 0.85),
+        "<- Ideal", xy=(min(x_vals) * 0.85, min(y_vals) * 0.85),
         fontsize=7, color="green", fontstyle="italic", alpha=0.7,
     )
 

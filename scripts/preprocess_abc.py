@@ -67,7 +67,7 @@ def main():
         else:
             topos_width = args.width
             if topology == "volumetric":
-                # Scale 3D voxel width to match 2D node counts roughly (e.g., 64x64 ≈ 16x16x16)
+                # Scale 3D voxel width to match 2D node counts roughly (e.g., 64x64 ~= 16x16x16)
                 topos_width = int(round(args.width ** (2/3)))
             
             topos_mapper = OT3Dto2DMapper(latent_topology=topology, width=topos_width)

@@ -1,5 +1,5 @@
 """
-Tests for router/topology_check.py — Euler characteristic and topological routing.
+Tests for router/topology_check.py - Euler characteristic and topological routing.
 """
 
 import sys
@@ -16,22 +16,22 @@ from topos.router.topology_check import compute_euler_characteristic, compute_ge
 
 class TestEulerCharacteristic:
     def test_sphere_vef(self):
-        """A tetrahedron (simplest sphere-like mesh): V=4, E=6, F=4 → χ=2."""
+        """A tetrahedron (simplest sphere-like mesh): V=4, E=6, F=4 -> chi=2."""
         chi = compute_euler_characteristic(V=4, E=6, F=4)
         assert chi == 2
 
     def test_cube_vef(self):
-        """Cube: V=8, E=12, F=6 → χ=2 (genus 0)."""
+        """Cube: V=8, E=12, F=6 -> chi=2 (genus 0)."""
         chi = compute_euler_characteristic(V=8, E=12, F=6)
         assert chi == 2
 
     def test_torus_vef(self):
-        """Torus triangulation: V=9, E=27, F=18 → χ=0 (genus 1)."""
+        """Torus triangulation: V=9, E=27, F=18 -> chi=0 (genus 1)."""
         chi = compute_euler_characteristic(V=9, E=27, F=18)
         assert chi == 0
 
     def test_double_torus_vef(self):
-        """Double torus: χ=−2 (genus 2)."""
+        """Double torus: chi=-2 (genus 2)."""
         chi = compute_euler_characteristic(V=10, E=30, F=18)
         assert chi == -2
 
@@ -61,13 +61,13 @@ trimesh = pytest.importorskip("trimesh")
 
 class TestEulerCharacteristicTrimesh:
     def test_icosphere(self):
-        """trimesh icosphere should have χ=2 (genus 0)."""
+        """trimesh icosphere should have chi=2 (genus 0)."""
         mesh = trimesh.creation.icosphere(subdivisions=2)
         chi = compute_euler_characteristic(mesh=mesh)
         assert chi == 2
 
     def test_box(self):
-        """trimesh box should have χ=2 (genus 0)."""
+        """trimesh box should have chi=2 (genus 0)."""
         mesh = trimesh.creation.box()
         chi = compute_euler_characteristic(mesh=mesh)
         assert chi == 2
@@ -88,7 +88,7 @@ class TestTopologicalRouter:
         assert self.router.route(chi=0) == "toroidal"
 
     def test_route_volumetric(self):
-        """χ = −2 (genus 2) → volumetric fallback."""
+        """chi = -2 (genus 2) -> volumetric fallback."""
         assert self.router.route(chi=-2) == "volumetric"
 
     def test_route_from_vef(self):

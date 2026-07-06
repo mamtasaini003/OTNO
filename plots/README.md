@@ -1,4 +1,4 @@
-# TOPOS — Publication Figures
+# TOPOS - Publication Figures
 
 This directory contains self-contained scripts for generating all five
 figures in the TOPOS paper.  Each script reads pre-computed evaluation
@@ -8,7 +8,7 @@ data from `results/eval/` and writes PDF + PNG figures to
 ## Quick Start
 
 ```bash
-# ── Step 1: Evaluate all models (GPU required) ────────────────────
+# -- Step 1: Evaluate all models (GPU required) --------------------
 # Mixed-genus dataset
 python scripts/evaluate_all.py \
     --config configs/mixed_genus_fair_comparison.yaml \
@@ -23,7 +23,7 @@ python scripts/evaluate_all.py \
     --datasets thingi10k \
     --gpus 0
 
-# ── Step 2: Generate all figures (CPU only) ───────────────────────
+# -- Step 2: Generate all figures (CPU only) -----------------------
 python plots/generate_all_plots.py
 ```
 
@@ -53,7 +53,7 @@ Each `.pt` file in `results/eval/` is a dict:
             "topology": str,        # "spherical", "toroidal", "open_surface", "high_genus"
             "chi": float,           # Euler characteristic
             "genus": float,         # computed genus
-            "rel_l2": float,        # relative L² error for this sample
+            "rel_l2": float,        # relative L2 error for this sample
             "abs_error": Tensor,    # per-vertex absolute error
             "pred": Tensor,         # flattened prediction
             "target": Tensor,       # flattened ground truth
@@ -74,9 +74,9 @@ Each `.pt` file in `results/eval/` is a dict:
 
 All plots share `plot_config.py` which defines:
 - **Publication rcParams** (font sizes, DPI, tick direction, grid)
-- **Colour palette** — colour-blind-safe, print-friendly
+- **Colour palette** - colour-blind-safe, print-friendly
 - **Model markers** and labels (consistent across all figures)
-- **Topology ordering** — canonical `[spherical, toroidal, open_surface, high_genus]`
+- **Topology ordering** - canonical `[spherical, toroidal, open_surface, high_genus]`
 
 To enable LaTeX rendering, set `text.usetex: True` in `plot_config.py`.
 
@@ -84,20 +84,20 @@ To enable LaTeX rendering, set `text.usetex: True` in `plot_config.py`.
 
 ```
 plots/
-├── README.md                   ← This file
-├── __init__.py
-├── plot_config.py              ← Shared style + palette
-├── plot_genus_scalability.py   ← Fig 1
-├── plot_error_heatmaps.py      ← Fig 2
-├── plot_boundary_vs_global.py  ← Fig 3
-├── plot_robustness_violin.py   ← Fig 4
-├── plot_pareto_efficiency.py   ← Fig 5
-└── generate_all_plots.py       ← Master runner
++-- README.md                   <- This file
++-- __init__.py
++-- plot_config.py              <- Shared style + palette
++-- plot_genus_scalability.py   <- Fig 1
++-- plot_error_heatmaps.py      <- Fig 2
++-- plot_boundary_vs_global.py  <- Fig 3
++-- plot_robustness_violin.py   <- Fig 4
++-- plot_pareto_efficiency.py   <- Fig 5
++-- generate_all_plots.py       <- Master runner
 
 scripts/
-└── evaluate_all.py             ← Produces results/eval/*.pt
++-- evaluate_all.py             <- Produces results/eval/*.pt
 
 results/
-├── eval/                       ← Raw evaluation data (.pt)
-└── figures/                    ← Generated figures (.pdf, .png)
++-- eval/                       <- Raw evaluation data (.pt)
++-- figures/                    <- Generated figures (.pdf, .png)
 ```

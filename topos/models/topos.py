@@ -2,15 +2,15 @@
 TOPOS: Topological Optimal-transport Partitioned Operator Solver.
 
 Unified 4-stage neural operator pipeline:
-  Stage 1 — OT Encoder:  Pre-computed diffeomorphic transport T (data module)
-  Stage 2 — Router:      Topology-aware workbench selection via Euler char.
-  Stage 3 — Solver:      Spectral FNO on the selected latent domain
-  Stage 4 — Decoder:     Inverse OT mapping via index lookup + projection
+  Stage 1 - OT Encoder:  Pre-computed diffeomorphic transport T (data module)
+  Stage 2 - Router:      Topology-aware workbench selection via Euler char.
+  Stage 3 - Solver:      Spectral FNO on the selected latent domain
+  Stage 4 - Decoder:     Inverse OT mapping via index lookup + projection
 
 The model supports three branches:
-  • "spherical"  — 2D Lat/Lon or HEALPix (genus 0, closed surfaces)
-  • "toroidal"   — 2D periodic grid FNO (genus 1, torus-like)
-  • "volumetric" — 3D Cartesian grid FNO (bounding box, higher genus, or open meshes)
+  * "spherical"  - 2D Lat/Lon or HEALPix (genus 0, closed surfaces)
+  * "toroidal"   - 2D periodic grid FNO (genus 1, torus-like)
+  * "volumetric" - 3D Cartesian grid FNO (bounding box, higher genus, or open meshes)
 """
 
 import torch
@@ -61,7 +61,7 @@ class TOPOS(nn.Module):
         # Spherical branch (genus 0)
         self.spherical_solver = SphericalTransportFNO(**spherical_config)
 
-        # Toroidal branch (genus 1) — separate weights or shared with spherical
+        # Toroidal branch (genus 1) - separate weights or shared with spherical
         if toroidal_config is not None:
             self.toroidal_solver = ToroidalTransportFNO(**toroidal_config)
         else:
@@ -99,7 +99,7 @@ class TOPOS(nn.Module):
                 return self.toroidal_solver
             import warnings
             warnings.warn(
-                "[TOPOS WARNING] Toroidal branch requested (χ ≈ 0) but toroidal_config was None. "
+                "[TOPOS WARNING] Toroidal branch requested (chi ~= 0) but toroidal_config was None. "
                 "Falling back to spherical_solver (SFNO). "
                 "CAUTION: SFNO uses spherical convolutions instead of standard 2D periodic ones! "
                 "Consider initializing TOPOS with a toroidal_config."
@@ -156,7 +156,7 @@ class TOPOS(nn.Module):
             Note: If an open mesh (2D grid) is routed to the Volumetric branch,
             it will be dynamically adjusted (zero-padded / unsqueezed).
         idx_decoder : LongTensor
-            Shape (n_target,). Maps latent grid indices → mesh vertices.
+            Shape (n_target,). Maps latent grid indices -> mesh vertices.
         points : Tensor, optional
             Physical coordinates, exclusively needed for "graph" fallback.
         features : Tensor, optional

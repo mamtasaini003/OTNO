@@ -2,13 +2,13 @@
 3D Volumetric Fourier Neural Operator for TOPOS Architecture.
 
 Handles the "volumetric" branch for geometries that are best represented
-in a regular Cartesian grid [0,1]³ — e.g., bounding-box regions, higher-genus
+in a regular Cartesian grid [0,1]3 - e.g., bounding-box regions, higher-genus
 surfaces that don't map cleanly to sphere or torus.
 
 Uses 3D spectral convolutions via neuralop's FNO with n_modes=(M1, M2, M3).
 To compete with strong geometry-aware operator baselines,
 ensure high enough mode-cut is used to capture high-frequency details 
-in the [0,1]³ latent space.
+in the [0,1]3 latent space.
 """
 
 import torch
@@ -21,7 +21,7 @@ from neuralop.layers.spectral_convolution import SpectralConv
 
 
 def create_cartesian_grid(n_x, n_y, n_z):
-    """Create a uniform Cartesian grid on [0, 1]³.
+    """Create a uniform Cartesian grid on [0, 1]3.
 
     Parameters
     ----------
@@ -31,7 +31,7 @@ def create_cartesian_grid(n_x, n_y, n_z):
     Returns
     -------
     Tensor
-        Shape (3, n_x, n_y, n_z) — coordinate channels.
+        Shape (3, n_x, n_y, n_z) - coordinate channels.
     """
     x = torch.linspace(0, 1, n_x)
     y = torch.linspace(0, 1, n_y)
@@ -157,7 +157,7 @@ class VolumetricFNO(FNO):
         Returns
         -------
         Tensor
-            Shape (1, out_channels, n_target) — predicted field on the
+            Shape (1, out_channels, n_target) - predicted field on the
             physical mesh.
         """
         # Lifting
@@ -176,7 +176,7 @@ class VolumetricFNO(FNO):
             transports = self.domain_padding.unpad(transports)
 
         # Reshape from 3D grid to point cloud:
-        # (B, hidden_channels, Nx, Ny, Nz) → (B, hidden_channels, N)
+        # (B, hidden_channels, Nx, Ny, Nz) -> (B, hidden_channels, N)
         B = transports.shape[0]
         transports = transports.reshape(B, self.hidden_channels, -1)
 

@@ -97,7 +97,7 @@ class ABCDatasetTOPOS(Dataset):
             idx_decoder = torch.arange(len(points))
             grid_width = 0
         else:
-            # Scale 3D voxel width to match 2D node counts (e.g., 64x64 ≈ 16x16x16)
+            # Scale 3D voxel width to match 2D node counts (e.g., 64x64 ~= 16x16x16)
             scaled_width = 64
             if topology == "volumetric":
                 scaled_width = 16 

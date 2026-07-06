@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """
-Master script — generate all five TOPOS publication figures.
+Master script - generate all five TOPOS publication figures.
 
 Reads pre-computed evaluation results from ``results/eval/`` and
 produces PDF + PNG figures in ``results/figures/``.
@@ -24,14 +24,14 @@ import sys
 
 PLOT_DIR = os.path.dirname(os.path.abspath(__file__))
 SCRIPTS = [
-    ("Plot 1 — Genus Scalability",      "plot_genus_scalability.py"),
-    ("Plot 2 — Error Heatmaps (Mixed)",  "plot_error_heatmaps.py --dataset mixed_genus"),
-    ("Plot 2 — Error Heatmaps (Thingi)", "plot_error_heatmaps.py --dataset thingi10k"),
-    ("Plot 3 — Boundary vs Global",      "plot_boundary_vs_global.py --dataset both"),
-    ("Plot 4 — Robustness Violin",       "plot_robustness_violin.py --dataset thingi10k"),
-    ("Plot 4 — Robustness Violin (Mixed)", "plot_robustness_violin.py --dataset mixed_genus"),
-    ("Plot 5 — Pareto (GPU Memory)",     "plot_pareto_efficiency.py --x_metric gpu_mb"),
-    ("Plot 5 — Pareto (Time)",           "plot_pareto_efficiency.py --x_metric time_ms"),
+    ("Plot 1 - Genus Scalability",      "plot_genus_scalability.py"),
+    ("Plot 2 - Error Heatmaps (Mixed)",  "plot_error_heatmaps.py --dataset mixed_genus"),
+    ("Plot 2 - Error Heatmaps (Thingi)", "plot_error_heatmaps.py --dataset thingi10k"),
+    ("Plot 3 - Boundary vs Global",      "plot_boundary_vs_global.py --dataset both"),
+    ("Plot 4 - Robustness Violin",       "plot_robustness_violin.py --dataset thingi10k"),
+    ("Plot 4 - Robustness Violin (Mixed)", "plot_robustness_violin.py --dataset mixed_genus"),
+    ("Plot 5 - Pareto (GPU Memory)",     "plot_pareto_efficiency.py --x_metric gpu_mb"),
+    ("Plot 5 - Pareto (Time)",           "plot_pareto_efficiency.py --x_metric time_ms"),
 ]
 
 
@@ -46,7 +46,7 @@ def main():
     args = parser.parse_args()
 
     print("=" * 64)
-    print("  TOPOS Paper — Generating All Figures")
+    print("  TOPOS Paper - Generating All Figures")
     print("=" * 64)
     print(f"  eval_dir : {args.eval_dir}")
     print(f"  out_dir  : {args.out_dir}")
@@ -60,7 +60,7 @@ def main():
         script_path = os.path.join(PLOT_DIR, script_name)
 
         if not os.path.exists(script_path):
-            print(f"  [SKIP] {title} — script not found: {script_path}")
+            print(f"  [SKIP] {title} - script not found: {script_path}")
             n_skip += 1
             continue
 
@@ -71,7 +71,7 @@ def main():
         ] + extra_args
 
         print(f"  [{title}]")
-        print(f"    → {' '.join(cmd)}")
+        print(f"    -> {' '.join(cmd)}")
 
         try:
             result = subprocess.run(cmd, capture_output=True, text=True, timeout=120)

@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 """
-Plot 3 — Global vs Boundary Error Grouped Bar Chart
+Plot 3 - Global vs Boundary Error Grouped Bar Chart
 
 For each model (GINO, OTNO, TOPOS) two adjacent bars are shown:
-  • Global Error   — Relative L² over the entire domain
-  • Boundary Error  — Relative L² evaluated strictly on vertices near
+  * Global Error   - Relative L2 over the entire domain
+  * Boundary Error  - Relative L2 evaluated strictly on vertices near
                       topological features (holes, handles, boundaries)
 
 This quantitatively demonstrates that TOPOS's latent routing preserves
@@ -46,7 +46,7 @@ def _load(eval_dir, model, dataset="mixed_genus"):
 
 
 def _compute_boundary_rel_l2(sample):
-    """Compute relative L² restricted to the boundary mask."""
+    """Compute relative L2 restricted to the boundary mask."""
     mask = sample["boundary_mask"]
     if mask.sum() == 0:
         return sample["rel_l2"]  # fallback
@@ -104,7 +104,7 @@ def main():
             print(f"[!] No data for {dataset}; skipping.")
             continue
 
-        # ── Draw ─────────────────────────────────────────────────────
+        # -- Draw -----------------------------------------------------
         x = np.arange(len(labels))
         width = 0.32
 

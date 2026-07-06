@@ -112,7 +112,7 @@ def main():
 
     # Paper uses n_t = 3586 physical mesh vertices for ShapeNet
     # n_s_sqrt = int(sqrt(expand_factor) * ceil(sqrt(n_t)))
-    # For expand_factor=2.0, n_t=3586 → n_s_sqrt = 84
+    # For expand_factor=2.0, n_t=3586 -> n_s_sqrt = 84
 
     # ---- Load precomputed OT data (torus, "Mean" strategy) ----
     data_path = config['dataset'].get('ot_data_path', None)
@@ -126,7 +126,7 @@ def main():
 
     n_s_sqrt = data['transports'].shape[2]  # 84 for expand_factor=2.0
     print(f"[*] Data loaded: {data['transports'].shape[0]} samples, "
-          f"latent grid {n_s_sqrt}×{n_s_sqrt}, "
+          f"latent grid {n_s_sqrt}x{n_s_sqrt}, "
           f"{data['points'].shape[1]} physical vertices")
 
     # ---- Split train/test ----
@@ -145,9 +145,9 @@ def main():
     test_indices_decoder  = data['indices_decoder'][n_train:n_train+n_test]
 
     # ---- Normalization (matching reference: normalize BEFORE training) ----
-    # pressure: normalize over [samples, vertices] → per-sample scalar stats
+    # pressure: normalize over [samples, vertices] -> per-sample scalar stats
     pressure_encoder = UnitGaussianNormalizer(train_pressures, reduce_dim=[0, 1])
-    # transport: normalize over [samples, H, W] → per-channel stats
+    # transport: normalize over [samples, H, W] -> per-channel stats
     transport_encoder = UnitGaussianNormalizer(train_transports, reduce_dim=[0, 2, 3])
 
     # Normalize training data (in-place on cloned data)
@@ -192,7 +192,7 @@ def main():
     test_loader  = DataLoader(test_dataset,  batch_size=1, shuffle=False)
 
     # ---- Model: Toroidal TransportFNO (matching reference exactly) ----
-    # Paper input: T_j = (Xi_j, M_j, H_j × N_j(E)) → 9 channels
+    # Paper input: T_j = (Xi_j, M_j, H_j x N_j(E)) -> 9 channels
     # Reference concatenates: transports(3) + torus_pos(3) + normal_cross(3) = 9ch
     # But in_channels in config may say 9, which is correct for the 9-channel input
     in_channels = 9  # transports(3) + torus_coords(3) + cross_normals(3)
@@ -241,7 +241,7 @@ def main():
             transports = batch_data['transports'].to(device)
             # Normalized pressures: (B, n_vertices)
             pressures = batch_data['pressures'].to(device)
-            # Physical mesh normals: (n_vertices, 3) — take first in batch
+            # Physical mesh normals: (n_vertices, 3) - take first in batch
             normals = batch_data['normals'][0].to(device)
             indices_encoder = batch_data['indices_encoder'][0].to(dtype=torch.long, device=device)
             indices_decoder = batch_data['indices_decoder'][0].to(dtype=torch.long, device=device)
@@ -249,8 +249,8 @@ def main():
             # ---- Build 9-channel input (per paper Algorithm 1, Step 3) ----
 
             # 1. Normal cross-product feature:
-            #    Physical normals indexed by encoder → mapped to torus grid
-            #    Cross with torus analytical normals → captures deformation
+            #    Physical normals indexed by encoder -> mapped to torus grid
+            #    Cross with torus analytical normals -> captures deformation
             mapped_normals = normals[indices_encoder]  # (n_s_sqrt^2, 3)
             torus_norms_flat = batch_data['nor'].reshape(-1, 3).to(device)  # (n_s_sqrt^2, 3)
             normal_features = torch.cross(mapped_normals, torus_norms_flat, dim=1)  # (n_s_sqrt^2, 3)

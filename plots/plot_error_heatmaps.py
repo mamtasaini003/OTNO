@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 """
-Plot 2 — Qualitative 3D Error Heatmaps
+Plot 2 - Qualitative 3D Error Heatmaps
 
-Multi-row × multi-column grid of 3D scatter renders.
+Multi-row x multi-column grid of 3D scatter renders.
   Rows    : Ground Truth, GINO, OTNO, TOPOS
   Columns : one shape per topology (spherical, toroidal, open, high-genus)
 

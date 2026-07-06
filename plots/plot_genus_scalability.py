@@ -1,13 +1,13 @@
 #!/usr/bin/env python
 """
-Plot 1 — Genus Scalability Line Plot  (Custom Mixed‑Genus Dataset)
+Plot 1 - Genus Scalability Line Plot  (Custom Mixed-Genus Dataset)
 
-X‑axis : Genus / topology class (0, 0.5, 1, 2+)
-Y‑axis : Mean Relative L² Error
+X-axis : Genus / topology class (0, 0.5, 1, 2+)
+Y-axis : Mean Relative L2 Error
 Lines  : GINO, OTNO, TOPOS
 
 Proves the core thesis: baselines degrade on high-genus objects while
-TOPOS remains stable via Euler‑characteristic‑aware routing.
+TOPOS remains stable via Euler-characteristic-aware routing.
 
 Usage:
     python plots/plot_genus_scalability.py [--eval_dir results/eval]
@@ -53,7 +53,7 @@ def main():
     args = parser.parse_args()
     apply_style()
 
-    # Collect data ────────────────────────────────────────────────────
+    # Collect data ----------------------------------------------------
     genus_ticks = []
     genus_labels = []
     for topo in TOPOLOGY_ORDER:
